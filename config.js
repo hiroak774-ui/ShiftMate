@@ -1,4 +1,4 @@
 window.SHIFTMATE_CONFIG = Object.freeze({
-  API_URL: "https://script.google.com/macros/s/AKfycbyo9C30leHIFNNNMpz-Xz080kY9zuRGFiYanBBpDtRrWrsi4jEeGF2MHZ6a4aTkStR30g/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbwe1kdpIPUN3Kccwuy0Bm2DuB2ICe4KIOyV7Pts1QDQdXqNFEXCI_TzsXRH52FtsO17AQ/exec",
   REQUEST_TIMEOUT_MS: 25000
 });
