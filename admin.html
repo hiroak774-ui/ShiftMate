@@ -20,12 +20,12 @@
 @media(max-width:520px){.stats{grid-template-columns:1fr 1fr}.chip{display:none}.toolbar{align-items:flex-start;flex-direction:column}.toolbar>.secondary{width:100%}.publish{flex-wrap:wrap}.publish .primary{width:100%}.dateRow{grid-template-columns:1fr}.noticeMeta{align-items:flex-start;flex-direction:column}.noticeActions{width:100%}.noticeActions button{flex:1}}
 
 /* V9.3 header alignment */
-.adminTopin{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px}
+.adminTopin{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:10px}
 .adminBrand{min-width:0;display:flex;align-items:center;justify-content:flex-start}
 .adminBrand .brandLogo{width:150px;max-width:100%;height:auto;display:block}
 .adminHeaderTitle{font-size:15px;font-weight:900;letter-spacing:.04em;text-align:center;white-space:nowrap;color:var(--ink)}
-.adminTopin .icon{justify-self:end}
-@media(max-width:390px){.adminBrand .brandLogo{width:132px}.adminHeaderTitle{font-size:14px}.adminTopin{gap:6px}}
+.adminTopin .icon{justify-self:end}.adminTopin .refreshDataButton{justify-self:end}.adminTopin .staffViewButton{justify-self:end}
+@media(max-width:430px){.adminBrand .brandLogo{width:124px}.adminHeaderTitle{font-size:13px}.adminTopin{gap:6px}.refreshDataButton{width:29px;height:29px}.staffViewButton{width:78px!important;padding:0 7px!important;font-size:11px!important}}
 
 
 /* V9.4 bottom navigation polish */
