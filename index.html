@@ -107,28 +107,18 @@
   <main class="launcher">
     <img class="icon" src="./shiftmate-icon-512.png" alt="ShiftMate">
     <h1>ShiftMate</h1>
-    <p>アプリを開いています。<br>そのままお待ちください。</p>
-    <div class="loader" aria-hidden="true"></div>
-    <a class="open" href="https://script.google.com/macros/s/AKfycbyo9C30leHIFNNNMpz-Xz080kY9zuRGFiYanBBpDtRrWrsi4jEeGF2MHZ6a4aTkStR30g/exec">ShiftMateを開く</a>
+    <p>下のボタンからShiftMateを開いてください。<br>初回はSafariの共有ボタンからホーム画面へ追加できます。</p>
+    <a class="open" href="https://script.google.com/macros/s/AKfycbyo9C30leHIFNNNMpz-Xz080kY9zuRGFiYanBBpDtRrWrsi4jEeGF2MHZ6a4aTkStR30g/exec" target="_blank" rel="noopener">ShiftMateを開く</a>
   </main>
 
   <script>
-    const appUrl = "https://script.google.com/macros/s/AKfycbyo9C30leHIFNNNMpz-Xz080kY9zuRGFiYanBBpDtRrWrsi4jEeGF2MHZ6a4aTkStR30g/exec";
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true;
 
-    // ホーム画面から起動した時だけ自動でGASへ遷移。
-    // Safariで通常表示した時はこの画面に留まり、ホーム画面へ追加できる。
     if (isStandalone) {
-      window.setTimeout(() => {
-        window.location.replace(appUrl);
-      }, 700);
-    } else {
       document.querySelector(".launcher p").innerHTML =
-        "Safariの共有ボタンから<br>「ホーム画面に追加」してください。";
-      document.querySelector(".loader").style.display = "none";
-      document.querySelector(".open").textContent = "ブラウザでShiftMateを開く";
+        "ShiftMateを開くボタンを押してください。<br>ログイン済みの場合は前回の画面を開きます。";
     }
   </script>
 </body>
