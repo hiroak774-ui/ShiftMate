@@ -114,9 +114,22 @@
 
   <script>
     const appUrl = "https://script.google.com/macros/s/AKfycbyo9C30leHIFNNNMpz-Xz080kY9zuRGFiYanBBpDtRrWrsi4jEeGF2MHZ6a4aTkStR30g/exec";
-    window.setTimeout(() => {
-      window.location.replace(appUrl);
-    }, 700);
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+
+    // ホーム画面から起動した時だけ自動でGASへ遷移。
+    // Safariで通常表示した時はこの画面に留まり、ホーム画面へ追加できる。
+    if (isStandalone) {
+      window.setTimeout(() => {
+        window.location.replace(appUrl);
+      }, 700);
+    } else {
+      document.querySelector(".launcher p").innerHTML =
+        "Safariの共有ボタンから<br>「ホーム画面に追加」してください。";
+      document.querySelector(".loader").style.display = "none";
+      document.querySelector(".open").textContent = "ブラウザでShiftMateを開く";
+    }
   </script>
 </body>
 </html>
