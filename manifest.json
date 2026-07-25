@@ -1,0 +1,24 @@
+{
+  "name": "ShiftMate",
+  "short_name": "ShiftMate",
+  "description": "ShiftMate シフト管理アプリ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6faf8",
+  "theme_color": "#5fcbb1",
+  "icons": [
+    {
+      "src": "./shiftmate-apple-touch-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./shiftmate-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

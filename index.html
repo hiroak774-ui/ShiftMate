@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ShiftMate</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" sizes="180x180" href="./shiftmate-apple-touch-icon-180.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./shiftmate-icon-512.png">
+
+  <meta name="apple-mobile-web-app-title" content="ShiftMate">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#5fcbb1">
+
+  <style>
+    :root {
+      color-scheme: light;
+      --mint: #5fcbb1;
+      --mint-dark: #247760;
+      --mint-soft: #e8f8f3;
+      --ink: #243832;
+      --muted: #7f8d89;
+      --bg: #f6faf8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", sans-serif;
+    }
+
+    .launcher {
+      width: min(100%, 420px);
+      display: grid;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .icon {
+      width: 112px;
+      height: 112px;
+      border-radius: 28px;
+      object-fit: cover;
+      box-shadow: 0 18px 42px rgba(40, 112, 91, .18);
+    }
+
+    h1 {
+      margin: 22px 0 7px;
+      font-size: 28px;
+      letter-spacing: -.6px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .loader {
+      width: 42px;
+      height: 42px;
+      margin-top: 26px;
+      border: 4px solid var(--mint-soft);
+      border-top-color: var(--mint);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    .open {
+      display: inline-grid;
+      place-items: center;
+      min-width: 220px;
+      min-height: 50px;
+      margin-top: 24px;
+      padding: 0 20px;
+      border-radius: 15px;
+      background: var(--mint);
+      color: white;
+      font-size: 14px;
+      font-weight: 850;
+      text-decoration: none;
+      box-shadow: 0 10px 24px rgba(43, 142, 113, .2);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <main class="launcher">
+    <img class="icon" src="./shiftmate-icon-512.png" alt="ShiftMate">
+    <h1>ShiftMate</h1>
+    <p>アプリを開いています。<br>そのままお待ちください。</p>
+    <div class="loader" aria-hidden="true"></div>
+    <a class="open" href="https://script.google.com/macros/s/AKfycbyo9C30leHIFNNNMpz-Xz080kY9zuRGFiYanBBpDtRrWrsi4jEeGF2MHZ6a4aTkStR30g/exec">ShiftMateを開く</a>
+  </main>
+
+  <script>
+    const appUrl = "https://script.google.com/macros/s/AKfycbyo9C30leHIFNNNMpz-Xz080kY9zuRGFiYanBBpDtRrWrsi4jEeGF2MHZ6a4aTkStR30g/exec";
+    window.setTimeout(() => {
+      window.location.replace(appUrl);
+    }, 700);
+  </script>
+</body>
+</html>
