@@ -465,9 +465,13 @@ body.monthLoading #requestView .tableCard,body.monthLoading #draftView .tableCar
 @keyframes switchAdmin{0%,100%{transform:translateX(0) scale(1)}50%{transform:translateX(10px) scale(.9);opacity:.7}}
 @keyframes switchStaff{0%,100%{transform:translateX(0) scale(.9);opacity:.7}50%{transform:translateX(-10px) scale(1)}}
 @keyframes switchArrow{0%,100%{transform:translateX(-3px);opacity:.45}50%{transform:translateX(3px);opacity:1}}
+
+.refreshDataButton{position:fixed;right:16px;top:calc(14px + env(safe-area-inset-top));z-index:210;width:42px;height:42px;border:none;border-radius:14px;background:rgba(255,255,255,.92);box-shadow:0 10px 28px rgba(31,72,60,.14);display:grid;place-items:center;color:var(--mint-dark,#367f70);cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.refreshDataButton svg{width:20px;height:20px}.refreshDataButton.isLoading svg{animation:refreshSpin .8s linear infinite}@keyframes refreshSpin{to{transform:rotate(360deg)}}
 </style>
   <script src="./config.js"></script>
   <script src="./api-client.js"></script>
+  <script src="./cache.js"></script>
 <style>
 html{opacity:0;transform:translateY(5px)}
 html.sm-page-ready{opacity:1;transform:none;transition:opacity .24s ease,transform .24s cubic-bezier(.22,.8,.25,1)}
@@ -482,6 +486,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <script src="./motion.js"></script>
 </head>
 <body>
+<button class="refreshDataButton" id="refreshDataButton" type="button" aria-label="最新データに更新" title="最新データに更新"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 <div class="screenSwitchLoader" id="screenSwitchLoader">
   <div class="screenSwitchLoaderInner">
     <div class="screenSwitchMotion" aria-hidden="true">
@@ -700,46 +705,22 @@ async function saveConfirmedDraft(showMessage=true){
 }
 function confirmDiscardChanges(){return !shiftDirty||confirm('保存していない変更があります。変更を破棄して移動しますか？')}
 function applyNotices(rows){notices=(rows||[]).map(n=>({id:n.id,text:n.content||'',start:n.startAt?new Date(n.startAt):null,end:n.endAt?new Date(n.endAt):null,status:n.publicationStatus||'公開中'}))}
-async function loadMonth(show=true, initial=false){
+
+function applyAdminSnapshot(data){
+  applyMembers(data?.members||[]);applySubmissions(data?.submissionStatus||[]);applyPatterns(data?.patterns||[]);
+  applyRequests(data?.requestedShifts||[]);applyConfirmed(data?.confirmedShifts||[]);shiftDirty=false;lastShiftSavedAt=null;
+  monthlySetting=data?.monthlySetting||createLocalMonthlyFallback(monthKey());applyNotices(data?.notices||[]);renderAll();
+}
+async function fetchAndCacheSnapshot(targetMonth){const snapshot=await api('apiGetInitialSnapshot',token,targetMonth);window.ShiftMateCache?.set?.(targetMonth,snapshot);return snapshot}
+async function loadMonth(show=true, initial=false, force=false){
   const targetMonth=monthKey();
 
   if(initial){
-    showDataLoader();
-    setLoadingState();
-    const defs=[
-      ['メンバー',()=>api('apiAdminListMembers',token,false),[]],
-      ['提出状況',()=>api('apiAdminGetSubmissionStatus',token,targetMonth),[]],
-      ['勤務区分',()=>api('apiGetShiftPatterns',token),[]],
-      ['希望シフト',()=>api('apiAdminGetRequestedShiftsAll',token,targetMonth),[]],
-      ['確定シフト',()=>api('apiAdminGetConfirmedShiftsAll',token,targetMonth),[]],
-      ['月別設定',async()=>{try{return await api('apiGetMonthlySetting',token,targetMonth)}catch(error){console.warn('[ShiftMate] 月別設定は端末側の初期値で継続します',error);return createLocalMonthlyFallback(targetMonth)}},createLocalMonthlyFallback(targetMonth)],
-      ['共有事項',()=>api('apiGetActiveNotices',token),[]]
-    ];
-    const tasks=defs.map(async([name,fn,fallback])=>{
-      beginLoaderStep(name);
-      const result=await safeSection(name,fn,fallback);
-      finishLoaderStep(name,result.ok);
-      return result;
-    });
-    let results=[];
-    let unexpectedError=null;
-    try{
-      results=await Promise.all(tasks);
-      const by=Object.fromEntries(results.map(r=>[r.name,r]));
-      applyMembers(by['メンバー'].data);applySubmissions(by['提出状況'].data);applyPatterns(by['勤務区分'].data);
-      applyRequests(by['希望シフト'].data);applyConfirmed(by['確定シフト'].data);shiftDirty=false;lastShiftSavedAt=null;
-      monthlySetting=by['月別設定'].ok ? (by['月別設定'].data||{}) : createLocalMonthlyFallback(targetMonth);
-      applyNotices(by['共有事項'].data);
-      renderAll();
-    }catch(error){
-      unexpectedError=error;
-      console.error('[ShiftMate initial render error]',error);
-    }finally{
-      const failed=results.filter(r=>!r.ok && r.name!=='月別設定');
-      await hideDataLoader(failed.length>0 || !!unexpectedError);
-      if(failed.length) say(`取得できない項目: ${failed.map(r=>r.name).join('・')}`);
-      if(unexpectedError) say('画面表示の一部でエラーが発生しました');
-    }
+    const cached=!force ? window.ShiftMateCache?.get?.(targetMonth,'admin') : null;
+    if(cached){applyAdminSnapshot(cached);$('#loadingScreen')?.classList.add('isHidden');return}
+    showDataLoader();setLoadingState();beginLoaderStep('店舗データ');
+    try{const snapshot=await fetchAndCacheSnapshot(targetMonth);if(!snapshot?.admin)throw new Error('管理者データを取得できませんでした');applyAdminSnapshot(snapshot.admin);finishLoaderStep('店舗データ',true);await hideDataLoader(false)}
+    catch(error){finishLoaderStep('店舗データ',false);console.error('[ShiftMate admin snapshot error]',error);await hideDataLoader(true);say(error.message||'店舗データを取得できませんでした')}
     return;
   }
 
@@ -1230,6 +1211,7 @@ if(staffViewButton){
 window.addEventListener('beforeunload',e=>{if(!shiftDirty)return;e.preventDefault();e.returnValue=''});
 const now=new Date();$('#today').textContent=`${now.getMonth()+1}月${now.getDate()}日（${DAY[now.getDay()]}）`;
 if(!token){say('セッションがありません。再ログインしてください。');return}
+$('#refreshDataButton')?.addEventListener('click',async()=>{const button=$('#refreshDataButton');if(button?.classList.contains('isLoading'))return;button?.classList.add('isLoading');try{await loadMonth(false,true,true);say('最新の情報に更新しました')}finally{button?.classList.remove('isLoading')}});
 loadMonth(false,true);
 })();
 

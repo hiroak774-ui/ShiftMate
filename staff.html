@@ -160,9 +160,13 @@ body{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))}
 @media(min-width:760px){
  .home-grid{grid-template-columns:1.05fr .95fr}.today-card{grid-row:span 2}
 }
+
+.refreshDataButton{position:fixed;right:16px;top:calc(14px + env(safe-area-inset-top));z-index:210;width:42px;height:42px;border:none;border-radius:14px;background:rgba(255,255,255,.92);box-shadow:0 10px 28px rgba(31,72,60,.14);display:grid;place-items:center;color:var(--mint-dark,#367f70);cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.refreshDataButton svg{width:20px;height:20px}.refreshDataButton.isLoading svg{animation:refreshSpin .8s linear infinite}@keyframes refreshSpin{to{transform:rotate(360deg)}}
 </style>
   <script src="./config.js"></script>
   <script src="./api-client.js"></script>
+  <script src="./cache.js"></script>
 <style>
 html{opacity:0;transform:translateY(5px)}
 html.sm-page-ready{opacity:1;transform:none;transition:opacity .24s ease,transform .24s cubic-bezier(.22,.8,.25,1)}
@@ -177,6 +181,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <script src="./motion.js"></script>
 </head>
 <body>
+<button class="refreshDataButton" id="refreshDataButton" type="button" aria-label="最新データに更新" title="最新データに更新"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 <div class="roleSwitchLoader" id="roleSwitchLoader">
   <div class="roleSwitchInner">
     <div class="roleSwitchMotion" aria-hidden="true">
@@ -367,31 +372,22 @@ function valuesToEntries(){
 function isLocked(){return !!monthlySetting?.isDeadlinePassed}
 function updateTodayLabel(){const now=new Date();$("#homeDateLabel").textContent=now.toLocaleDateString("ja-JP",{month:"numeric",day:"numeric",weekday:"short"})}
 
-async function loadMonth(date, quiet=false){
+function applyStaffSnapshot(data){
+  user=data.user;patterns=(data.patterns||[]).map(p=>({...p,time:formatTime(p),role:p.category||"区分なし",roleClass:patternRoleClass(p.category)}));
+  patterns.push({code:"○",time:"終日勤務可能",role:"時間指定なし",roleClass:"none"},{code:"休",time:"希望休",role:"お休み",roleClass:"none"},{code:"有",time:"有給休暇",role:"お休み",roleClass:"none"});
+  monthlySetting=data.monthlySetting||null;notices=data.notices||[];members=data.members||[];values=entriesToValues(data.requestedShifts||[]);
+  requestedStatus=(data.requestedShifts||[])[0]?.status||"";confirmedRows=data.allConfirmedShifts?.length?data.allConfirmedShifts:(data.confirmedShifts||[]);
+  const personalConfirmedShifts=(data.confirmedShifts||[]).filter(r=>r.staffId===user.staffId);const homeData={...data,personalConfirmedShifts,allConfirmedShifts:confirmedRows};
+  renderIdentity();renderCalendar();renderPatternPicker();renderConfirmed();renderHome(homeData);
+}
+async function fetchAndCacheSnapshot(targetMonth){const snapshot=await api("apiGetInitialSnapshot",token,targetMonth);window.ShiftMateCache?.set?.(targetMonth,snapshot);return snapshot}
+async function loadMonth(date, quiet=false, force=false){
  if(!token){location.reload();return}
  if(!quiet)showLoading("シフトデータを読み込んでいます");
  try{
-  const data=await Promise.race([
-    api("apiGetBootstrapData",token,monthKey(date)),
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error("データの読み込みに時間がかかっています。再読み込みしてください。")),20000))
-  ]);
-  user=data.user;patterns=(data.patterns||[]).map(p=>({...p,time:formatTime(p),role:p.category||"区分なし",roleClass:patternRoleClass(p.category)}));
-  patterns.push(
-   {code:"○",time:"終日勤務可能",role:"時間指定なし",roleClass:"none"},
-   {code:"休",time:"希望休",role:"お休み",roleClass:"none"},
-   {code:"有",time:"有給休暇",role:"お休み",roleClass:"none"}
-  );
-  monthlySetting=data.monthlySetting||null;notices=data.notices||[];members=data.members||[];
-  values=entriesToValues(data.requestedShifts||[]);
-  requestedStatus=(data.requestedShifts||[])[0]?.status||"";
-  confirmedRows=data.confirmedShifts||[];
-  const personalConfirmedShifts=confirmedRows.filter(r=>r.staffId===user.staffId);
-  const homeData={
-    ...data,
-    personalConfirmedShifts,
-    allConfirmedShifts:confirmedRows
-  };
-  renderIdentity();renderCalendar();renderPatternPicker();renderConfirmed();renderHome(homeData);
+  const targetMonth=monthKey(date);let data=!force?window.ShiftMateCache?.get?.(targetMonth,"staff"):null;
+  if(!data){const snapshot=await Promise.race([fetchAndCacheSnapshot(targetMonth),new Promise((_,reject)=>setTimeout(()=>reject(new Error("データの読み込みに時間がかかっています。再読み込みしてください。")),20000))]);data=snapshot?.staff}
+  if(!data)throw new Error("スタッフデータを取得できませんでした");applyStaffSnapshot(data);
  }catch(e){
   console.error("[ShiftMate Staff] loadMonth failed",e);
   toast(e.message);
@@ -567,6 +563,8 @@ if(isRoleSwitchEntry){
  $("#loadingText").textContent="最新のシフト情報を確認しています";
  window.ShiftMateMotion?.consumeTransition?.();
 }
+
+$("#refreshDataButton")?.addEventListener("click",async()=>{const button=$("#refreshDataButton");if(button?.classList.contains("isLoading"))return;button?.classList.add("isLoading");try{await loadMonth(viewDate,false,true);toast("最新の情報に更新しました")}finally{button?.classList.remove("isLoading")}});
 
 (async function init(){
  const now=new Date();
