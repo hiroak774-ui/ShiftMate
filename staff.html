@@ -161,7 +161,7 @@ body{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))}
  .home-grid{grid-template-columns:1.05fr .95fr}.today-card{grid-row:span 2}
 }
 
-.refreshDataButton{position:fixed;right:16px;top:calc(14px + env(safe-area-inset-top));z-index:210;width:42px;height:42px;border:none;border-radius:14px;background:rgba(255,255,255,.92);box-shadow:0 10px 28px rgba(31,72,60,.14);display:grid;place-items:center;color:var(--mint-dark,#367f70);cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.refreshDataButton{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line);border-radius:15px;background:#fff;display:grid;place-items:center;color:var(--mint-dark,#367f70);cursor:pointer;box-shadow:none}
 .refreshDataButton svg{width:20px;height:20px}.refreshDataButton.isLoading svg{animation:refreshSpin .8s linear infinite}@keyframes refreshSpin{to{transform:rotate(360deg)}}
 </style>
   <script src="./config.js"></script>
@@ -181,7 +181,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <script src="./motion.js"></script>
 </head>
 <body>
-<button class="refreshDataButton" id="refreshDataButton" type="button" aria-label="最新データに更新" title="最新データに更新"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+
 <div class="roleSwitchLoader" id="roleSwitchLoader">
   <div class="roleSwitchInner">
     <div class="roleSwitchMotion" aria-hidden="true">
@@ -208,7 +208,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
       <h1 id="pageTitle">ホーム</h1>
       <p id="pageSub">今日の予定を確認できます。</p>
     </div>
-    <button class="menu-btn" id="menuBtn" aria-label="メニュー">☰</button>
+    <button class="refreshDataButton" id="refreshDataButton" type="button" aria-label="最新データに更新" title="最新データに更新"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="menu-btn" id="menuBtn" aria-label="メニュー">☰</button>
   </div>
 </header>
 
