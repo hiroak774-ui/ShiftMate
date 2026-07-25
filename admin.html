@@ -468,6 +468,18 @@ body.monthLoading #requestView .tableCard,body.monthLoading #draftView .tableCar
 </style>
   <script src="./config.js"></script>
   <script src="./api-client.js"></script>
+<style>
+html{opacity:0;transform:translateY(5px)}
+html.sm-page-ready{opacity:1;transform:none;transition:opacity .24s ease,transform .24s cubic-bezier(.22,.8,.25,1)}
+html.sm-page-leaving{opacity:0;transform:translateY(-4px);transition:opacity .14s ease,transform .14s ease}
+button,a,[role="button"]{-webkit-tap-highlight-color:transparent}
+button:active,a:active,[role="button"]:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){
+ html,html.sm-page-ready,html.sm-page-leaving{opacity:1;transform:none;transition:none!important}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+<script src="./motion.js"></script>
 </head>
 <body>
 <div class="screenSwitchLoader" id="screenSwitchLoader">
@@ -1196,13 +1208,22 @@ $('#openPatternAdd').onclick=()=>{$('#timeGuideShade').classList.remove('on');$(
 $('#savePattern').onclick=async()=>{try{const category=$('#patternOpen').checked?'オープン':$('#patternClose').checked?'クローズ':'中番';shiftPatterns=await api('apiAdminSaveShiftPattern',token,{code:$('#patternCode').value,startTime:$('#patternStart').value,endTime:$('#patternEnd').value,breakMinutes:Number($('#patternBreak').value||0)*60,category});$('#patternAddShade').classList.remove('on');renderTimeGuide();say('勤務区分を保存しました')}catch(e){say(e.message)}};
 bindEntryTabs();
 
+const entryTransition=window.ShiftMateMotion?.peekTransition?.()||'';
+const isRoleSwitchEntry=entryTransition==='role-switch';
+if(isRoleSwitchEntry){
+  $('#loadingScreen')?.classList.add('isHidden');
+  $('#loadingScreen')?.setAttribute('aria-busy','false');
+  window.ShiftMateMotion?.consumeTransition?.();
+}
+
 const staffViewButton=$('#staffViewButton');
 if(staffViewButton){
-  staffViewButton.addEventListener('click',()=>{
+  staffViewButton.addEventListener('click',(event)=>{
+    event.preventDefault();
     localStorage.setItem(LAST_PAGE_KEY,'staff');
-    // 画面切替は保存状態とは別操作として扱い、モバイルでも確実に遷移させる。
     shiftDirty=false;
-    $('#screenSwitchLoader')?.classList.add('on');
+    window.ShiftMateMotion?.markRoleSwitch?.('staff');
+    window.ShiftMateMotion?.leave?.(()=>{window.location.href='./staff.html'});
   });
 }
 

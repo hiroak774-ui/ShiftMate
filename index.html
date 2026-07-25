@@ -406,12 +406,47 @@
         transition-duration: .01ms !important;
       }
     }
-  </style>
+  
+.startup-splash{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:#f6faf8;opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease}
+.startup-splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.startup-inner{text-align:center}
+.startup-mark{width:76px;height:76px;margin:0 auto 18px;border-radius:24px;display:grid;place-items:center;background:#fff;box-shadow:0 18px 46px rgba(40,112,92,.14);animation:startupFloat 1.7s ease-in-out infinite}
+.startup-mark img{width:58px;height:58px;object-fit:contain;border-radius:17px}
+.startup-title{font-size:18px;font-weight:850;letter-spacing:-.2px}
+.startup-copy{margin-top:7px;color:var(--sub);font-size:12px}
+.startup-line{width:136px;height:4px;margin:18px auto 0;overflow:hidden;border-radius:99px;background:#dfeee9}
+.startup-line::after{content:"";display:block;width:42%;height:100%;border-radius:inherit;background:var(--mint);animation:startupLine 1.05s ease-in-out infinite}
+@keyframes startupFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes startupLine{0%{transform:translateX(-120%)}100%{transform:translateX(340%)}}
+
+</style>
   <script src="./config.js"></script>
   <script src="./api-client.js"></script>
+<style>
+html{opacity:0;transform:translateY(5px)}
+html.sm-page-ready{opacity:1;transform:none;transition:opacity .24s ease,transform .24s cubic-bezier(.22,.8,.25,1)}
+html.sm-page-leaving{opacity:0;transform:translateY(-4px);transition:opacity .14s ease,transform .14s ease}
+button,a,[role="button"]{-webkit-tap-highlight-color:transparent}
+button:active,a:active,[role="button"]:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){
+ html,html.sm-page-ready,html.sm-page-leaving{opacity:1;transform:none;transition:none!important}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+<script src="./motion.js"></script>
 </head>
 
 <body>
+
+<div class="startup-splash" id="startupSplash" role="status" aria-live="polite">
+  <div class="startup-inner">
+    <div class="startup-mark"><img src="./shiftmate-apple-touch-icon-180.png" alt=""></div>
+    <div class="startup-title">ShiftMate</div>
+    <div class="startup-copy" id="startupCopy">ShiftMateを開いています</div>
+    <div class="startup-line" aria-hidden="true"></div>
+  </div>
+</div>
+
   <main class="app">
     <div class="shell" id="shell">
       <div class="brand" aria-label="ShiftMate">
@@ -597,7 +632,9 @@
       loginMessage: document.getElementById('loginMessage'),
       changeMessage: document.getElementById('changeMessage'),
       loginButton: document.getElementById('loginButton'),
-      changeButton: document.getElementById('changeButton')
+      changeButton: document.getElementById('changeButton'),
+      startupSplash: document.getElementById('startupSplash'),
+      startupCopy: document.getElementById('startupCopy')
     };
 
     document.addEventListener('DOMContentLoaded', initialize);
@@ -607,23 +644,39 @@
 
       const existingToken = safeStorageGet(STORAGE_KEY);
       if (!existingToken) {
+        hideStartupSplash();
         setTimeout(() => el.email.focus(), 350);
         return;
       }
 
-      setLoading(el.loginButton, true);
+      el.startupCopy.textContent = 'ログイン情報を確認しています';
       callGas('apiResolveLaunch', existingToken, safeStorageGet(LAST_PAGE_KEY))
         .then((response) => {
           const data = unwrapResponse(response);
           state.sessionToken = existingToken;
           state.user = data.user;
-          routeByRole(data.user, data.screen);
+          routeByRole(data.user, data.screen, 'startup');
         })
         .catch(() => {
           safeStorageRemove(STORAGE_KEY);
-          setLoading(el.loginButton, false);
+          hideStartupSplash();
           setTimeout(() => el.email.focus(), 100);
         });
+    }
+
+    function hideStartupSplash() {
+      if (!el.startupSplash) return;
+      el.startupSplash.classList.add('hidden');
+      window.setTimeout(() => el.startupSplash.remove(), 320);
+    }
+
+    function showRoleLoading(user) {
+      if (!el.startupSplash) return;
+      const role = String(user && user.role || '').toLowerCase();
+      el.startupCopy.textContent = role === ROLE_ADMIN
+        ? '店舗情報を準備しています'
+        : 'シフト情報を準備しています';
+      el.startupSplash.classList.remove('hidden');
     }
 
     function bindEvents() {
@@ -674,7 +727,7 @@
           return;
         }
 
-        routeByRole(data.user);
+        routeByRole(data.user, null, 'login');
       } catch (error) {
         safeStorageRemove(STORAGE_KEY);
         showMessage(el.loginMessage, readableError(error));
@@ -724,7 +777,7 @@
         state.sessionToken = data.sessionToken;
         safeStorageSet(STORAGE_KEY, data.sessionToken);
 
-        routeByRole(state.user);
+        routeByRole(state.user, null, 'login');
       } catch (error) {
         showMessage(el.changeMessage, readableError(error));
         setLoading(el.changeButton, false);
@@ -758,19 +811,16 @@
       }, 210);
     }
 
-    function routeByRole(user, resolvedScreen) {
+    function routeByRole(user, resolvedScreen, reason = 'resume') {
       const role = String(user && user.role || '').toLowerCase();
 
       if (role !== ROLE_ADMIN && role !== ROLE_STAFF) {
         safeStorageRemove(STORAGE_KEY);
+        hideStartupSplash();
         showMessage(el.loginMessage, 'ユーザー権限を確認できませんでした。管理者へお問い合わせください。');
         setLoading(el.loginButton, false);
         return;
       }
-
-      el.shell.style.transition = 'opacity .22s ease, transform .22s ease';
-      el.shell.style.opacity = '0';
-      el.shell.style.transform = 'translateY(-6px)';
 
       const savedPage = safeStorageGet(LAST_PAGE_KEY);
       const page = role === ROLE_ADMIN
@@ -779,9 +829,22 @@
 
       if (role === ROLE_ADMIN) safeStorageSet(LAST_PAGE_KEY, page);
 
-      setTimeout(() => {
+      if (reason === 'login') {
+        showRoleLoading(user);
+      } else if (reason === 'startup' && el.startupCopy) {
+        el.startupCopy.textContent = role === ROLE_ADMIN
+          ? '管理者画面を開いています'
+          : 'スタッフ画面を開いています';
+      }
+
+      sessionStorage.setItem(
+        'shiftmate_transition',
+        reason === 'login' ? 'initial-login' : 'startup-resume'
+      );
+
+      window.setTimeout(() => {
         window.location.href = page === 'admin' ? './admin.html' : './staff.html';
-      }, 210);
+      }, reason === 'login' ? 280 : 120);
     }
 
     function togglePassword(button) {

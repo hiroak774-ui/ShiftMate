@@ -163,6 +163,18 @@ body{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))}
 </style>
   <script src="./config.js"></script>
   <script src="./api-client.js"></script>
+<style>
+html{opacity:0;transform:translateY(5px)}
+html.sm-page-ready{opacity:1;transform:none;transition:opacity .24s ease,transform .24s cubic-bezier(.22,.8,.25,1)}
+html.sm-page-leaving{opacity:0;transform:translateY(-4px);transition:opacity .14s ease,transform .14s ease}
+button,a,[role="button"]{-webkit-tap-highlight-color:transparent}
+button:active,a:active,[role="button"]:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){
+ html,html.sm-page-ready,html.sm-page-leaving{opacity:1;transform:none;transition:none!important}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+<script src="./motion.js"></script>
 </head>
 <body>
 <div class="roleSwitchLoader" id="roleSwitchLoader">
@@ -520,7 +532,12 @@ $$(".nav").forEach(n=>n.onclick=()=>{$$(".nav").forEach(x=>x.classList.remove("a
 $("#menuBtn").onclick=()=>$("#drawerBg").classList.add("show");$("#drawerClose").onclick=()=>$("#drawerBg").classList.remove("show");$("#drawerBg").onclick=e=>{if(e.target===$("#drawerBg"))$("#drawerBg").classList.remove("show")};
 $("#drawerNotice").onclick=()=>{$(".nav[data-page='homePage']").click();$("#drawerBg").classList.remove("show")};
 $("#logoutBtn").onclick=async()=>{try{await api("apiLogout",token)}catch(_){ }localStorage.removeItem(STORAGE_KEY);location.reload()};
-$("#adminSwitch").onclick=()=>{localStorage.setItem(LAST_PAGE_KEY,"admin");$("#roleSwitchLoader")?.classList.add("on")};
+$("#adminSwitch").onclick=(event)=>{
+ event.preventDefault();
+ localStorage.setItem(LAST_PAGE_KEY,"admin");
+ window.ShiftMateMotion?.markRoleSwitch?.("admin");
+ window.ShiftMateMotion?.leave?.(()=>{window.location.href="./admin.html"});
+};
 ["patternOverlay","singleOverlay","weekdayOverlay"].forEach(id=>$("#"+id).addEventListener("click",e=>{if(e.target.id===id)e.target.classList.add("hidden")}));
 document.addEventListener("pointermove",moveBulkDrag,{passive:false});document.addEventListener("pointerup",endBulkDrag);document.addEventListener("pointercancel",endBulkDrag);
 
@@ -537,6 +554,20 @@ setTimeout(()=>{
  }
 },22000);
 
+
+const entryTransition=window.ShiftMateMotion?.peekTransition?.()||"";
+const isRoleSwitchEntry=entryTransition==="role-switch";
+if(isRoleSwitchEntry){
+ $("#appLoading")?.classList.add("hidden");
+ window.ShiftMateMotion?.consumeTransition?.();
+}else if(entryTransition==="initial-login"){
+ $("#loadingText").textContent="シフト情報を準備しています";
+ window.ShiftMateMotion?.consumeTransition?.();
+}else if(entryTransition==="startup-resume"){
+ $("#loadingText").textContent="最新のシフト情報を確認しています";
+ window.ShiftMateMotion?.consumeTransition?.();
+}
+
 (async function init(){
  const now=new Date();
 
@@ -545,7 +576,7 @@ setTimeout(()=>{
 
  bulkPattern={code:"A",time:"",role:"",roleClass:"none"};
  updateTodayLabel();
- await loadMonth(viewDate);
+ await loadMonth(viewDate,isRoleSwitchEntry);
 })();
 </script>
 </body>
