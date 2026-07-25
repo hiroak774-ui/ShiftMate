@@ -556,7 +556,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <div class="head"><div><h1>ホーム</h1><p>提出状況と共有事項をまとめて確認できます。</p></div><div class="chip" id="today"></div></div>
 <div class="stats"><div class="card stat"><span class="lab">提出済み</span><span class="num"><b id="doneN">—</b><small>人</small></span><span class="foot">全<span id="homeTotal">—</span>名</span></div><div class="card stat"><span class="lab">未提出</span><span class="num" style="color:var(--red)"><b id="yetN">—</b><small>人</small></span><span class="foot">締切まで3日</span></div></div>
 <div class="grid">
-<section><div class="title"><h2>未提出者</h2><span class="sub">最終催促日時を確認できます</span></div><div class="card panel" id="pending"></div><button class="primary full" id="remindAll" style="margin-top:10px">未提出者全員に催促</button></section>
+<section><div class="title"><h2>未提出者</h2><span class="sub">最終催促日時を確認できます</span></div><div class="card panel" id="pending"></div><button class="primary full" id="remindAll" style="margin-top:10px">グループ用催促文をコピー</button></section>
 <section><div class="title"><h2>共有事項</h2><span class="sub">公開中・公開予定</span></div><button class="addNotice" id="addNotice">＋ 共有事項を追加</button><div class="noticeList" id="noticeList"></div></section>
 </div></section>
 <section class="page" id="shift">
@@ -599,7 +599,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 </div>
 <div class="shade" id="memberShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3 id="memberTitle">メンバーを追加</h3><button class="closeX" id="closeMember">×</button></div><div class="memberPhotoReadOnly hide" id="memberPhotoReadOnly"></div><div class="field"><label>氏名</label><input id="mName" placeholder="例：佐藤 美咲"></div><div class="field"><label>メールアドレス</label><input id="mEmail" type="email" autocomplete="off" placeholder="例：staff@example.com"><small style="display:block;margin-top:6px;color:var(--mut)">初期登録済みのメンバーは、メールを登録して保存するとログイン情報を発行します。</small></div><div class="loginSetupBox hide" id="loginSetupBox"><div class="loginSetupRow"><div class="loginSetupCopy"><strong>ログイン設定</strong><small id="loginSetupHelp">現在のログイン状態を確認できます。</small></div><span class="loginStatus" id="loginStatus">設定済み</span></div><button class="secondary" id="resetMemberPassword" style="width:100%;margin-top:10px">仮パスワードを再発行</button></div><div class="field"><label>設定</label><div class="memberSettings"><label class="memberToggle"><span><strong>管理者</strong><small>管理者画面へ切り替えられるメンバーとして表示</small></span><span class="switchControl"><input type="checkbox" id="mAdmin"><span class="switchTrack"></span></span></label><label class="memberToggle"><span><strong>社保</strong><small>社会保険加入メンバーとして表示</small></span><span class="switchControl"><input type="checkbox" id="mInsured"><span class="switchTrack"></span></span></label><label class="memberToggle"><span><strong>新人</strong><small>シフト作成時に新人マークを表示</small></span><span class="switchControl"><input type="checkbox" id="mNew"><span class="switchTrack"></span></span></label></div></div><div class="mactions"><button class="secondary" id="cancelMember">キャンセル</button><button class="primary" id="saveMember">保存</button></div><div class="memberDeleteWrap hide" id="memberDeleteWrap"><button class="danger" id="deleteMember">このメンバーを削除</button></div></div></div>
 <div class="shade" id="deleteMemberShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>メンバーを削除</h3><button class="closeX" id="cancelDeleteMember">×</button></div><p class="confirmCopy"><span class="deleteMemberName" id="deleteMemberName"></span>さんをメンバー一覧から削除しますか？</p><p class="deleteWarning">この操作を行うと、現在表示されている希望シフト・作成シフトからも削除されます。</p><div class="mactions"><button class="secondary" id="cancelDeleteMember2">キャンセル</button><button class="danger" id="confirmDeleteMember">削除する</button></div></div></div>
-<div class="shade" id="reminderShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3 id="reminderTitle">催促を送信</h3><button class="closeX" id="cancelReminder">×</button></div><p class="confirmCopy" id="reminderCopy"></p><div class="mactions"><button class="secondary" id="cancelReminder2">キャンセル</button><button class="primary" id="sendReminder">送信する</button></div></div></div>
+<div class="shade" id="reminderShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3 id="reminderTitle">催促文をコピー</h3><button class="closeX" id="cancelReminder">×</button></div><p class="confirmCopy" id="reminderCopy"></p><textarea id="reminderTextPreview" readonly style="width:100%;min-height:220px;resize:none;margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:15px;background:#f8fbfa;color:var(--ink);font:inherit;font-size:12px;line-height:1.75"></textarea><div class="mactions"><button class="secondary" id="cancelReminder2">キャンセル</button><button class="primary" id="sendReminder">コピーする</button></div></div></div>
 <div class="shade" id="noticeShade"><div class="modal" id="noticeModal"><div class="handle"></div><div class="modalHead"><h3 id="noticeModalTitle">共有事項を追加</h3><button class="closeX" id="closeNotice">×</button></div><div class="field"><label>公開日時</label><div class="choices" id="startChoices"><button class="choice on" data-start="now">今から</button><button class="choice" data-start="custom">日時を指定</button></div></div><div class="field hide" id="startCustom"><label>公開開始日時</label><input type="datetime-local" id="startAt"></div><div class="field"><label>公開期間</label><div class="choices" id="periodChoices"><button class="choice on" data-period="today">今日だけ</button><button class="choice" data-period="tomorrow">明日まで</button><button class="choice" data-period="3days">3日間</button><button class="choice" data-period="week">1週間</button><button class="choice" data-period="custom">日時を指定</button><button class="choice" data-period="forever">期限なし</button></div></div><div class="field hide" id="endCustom"><label>公開終了日時</label><input type="datetime-local" id="endAt"></div><div class="field"><label>共有内容</label><textarea id="noticeText" placeholder="スタッフに共有したい内容を入力してください"></textarea></div><div class="draftHint">入力中の内容は、この画面を閉じるまで保持されます。</div><div class="mactions"><button class="secondary" id="saveDraft">一時保存</button><button class="primary" id="publishNotice">追加する</button></div></div></div>
 <div class="shade" id="closeNoticeShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3 id="closeNoticeTitle">入力内容を閉じますか？</h3><button class="closeX" id="cancelCloseNotice">×</button></div><p class="confirmCopy" id="closeNoticeCopy">入力中の内容があります。下書きとして保存するか、破棄して閉じてください。</p><div class="mactions"><button class="danger" id="discardNotice">破棄して閉じる</button><button class="primary" id="draftAndClose">下書きを保存</button></div></div></div>
 <div class="shade" id="unpublishShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>共有事項を非公開にしますか？</h3><button class="closeX" id="cancelUnpublish">×</button></div><p class="confirmCopy">非公開にすると、ホームの一覧から削除されます。</p><div class="mactions"><button class="secondary" id="cancelUnpublish2">キャンセル</button><button class="danger" id="confirmUnpublish">非公開にする</button></div></div></div>
@@ -613,7 +613,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <div class="shade" id="unpublishShiftShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>シフトを非公開にしますか？</h3><button class="closeX" id="closeUnpublishShift">×</button></div><p class="confirmCopy"><span class="publishMonth" id="unpublishMonthLabel">2026年8月</span>のシフト表を非公開にします。<br>スタッフ画面からは確認できなくなります。</p><div class="mactions"><button class="secondary" id="cancelUnpublishShift">キャンセル</button><button class="danger" id="confirmUnpublishShift">非公開にする</button></div></div></div>
 <div class="shade" id="generateDraftShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3 id="generateDraftTitle">仮シフトを作成しますか？</h3><button class="closeX" id="closeGenerateDraft">×</button></div><p class="confirmCopy" id="generateDraftCopy">希望シフトをもとにシフト表を作成します。</p><div class="mactions"><button class="secondary" id="cancelGenerateDraft">キャンセル</button><button class="primary" id="confirmGenerateDraft">作成する</button></div></div></div>
 <div class="shade" id="shareShiftShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>シフトを共有</h3><button class="closeX" id="closeShareShift">×</button></div><div class="sharePreviewCard"><div class="sharePreviewIcon">🖼️</div><div class="sharePreviewCopy"><strong id="shareMonthLabel">2026年8月 シフト表</strong><span>紙のシフト表を参考にした共有用画像を作成します。</span></div></div><p class="shareModalNote">画像を作成後、対応端末ではLINEやAirDropなどの共有先を選べます。共有機能に対応していない場合は画像として保存されます。</p><div class="mactions"><button class="secondary" id="cancelShareShift">キャンセル</button><button class="primary sharePrimary" id="confirmShareShift"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 8 5-5 5 5"></path><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>画像を作成</button></div></div></div>
-<div class="shade" id="passwordResultShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>ログイン情報を発行しました</h3><button class="closeX" id="closePasswordResult">×</button></div><div class="passwordResult"><p id="passwordResultName"></p><code id="passwordResultValue"></code><p>この仮パスワードは画面を閉じると再表示できません。本人へ安全な方法で共有してください。</p></div><div class="mactions"><button class="secondary" id="copyPasswordResult">コピー</button><button class="primary" id="donePasswordResult">完了</button></div></div></div>
+<div class="shade" id="passwordResultShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>ログイン情報を発行しました</h3><button class="closeX" id="closePasswordResult">×</button></div><div class="passwordResult"><p id="passwordResultName"></p><code id="passwordResultValue"></code><p>LINEでそのまま送れる案内文をコピーできます。仮パスワードは画面を閉じると再表示できません。</p></div><textarea id="passwordLinePreview" readonly style="width:100%;min-height:220px;resize:none;margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:15px;background:#f8fbfa;color:var(--ink);font:inherit;font-size:12px;line-height:1.75"></textarea><div class="mactions"><button class="secondary" id="copyPasswordResult">LINE用文章をコピー</button><button class="primary" id="donePasswordResult">完了</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 (()=>{
@@ -786,7 +786,7 @@ function adminAvatarHtml(person,className=""){
   ? `<div class="av ${className}"><img src="${escapeHtml(person.avatarUrl)}" alt="${escapeHtml(person.name||"スタッフ")}" referrerpolicy="no-referrer"></div>`
   : `<div class="av ${className}">${escapeHtml(initial)}</div>`;
 }
-function pending(){const b=$('#pending');if(!b)return;const list=yet();b.classList.add('pendingList');b.innerHTML=list.length?list.map((p,i)=>{const s=submissionMap[p.id]||{};const reminder=s.lastReminderAt?`<span class="reminderState">最終催促：${escapeHtml(fmtDate(s.lastReminderAt))}</span>`:'';return `<div class="row">${adminAvatarHtml(p,i%3===1?'v':i%3===2?'b':'')}<div class="grow"><div class="name">${escapeHtml(p.name)}</div><div class="meta"><span>希望シフト未提出</span><span class="emailState">${escapeHtml(p.email||'メール未登録')}</span>${reminder}</div></div><button class="mini" data-remind="${p.id}">催促</button></div>`}).join(''):'<div class="empty">全員提出済みです</div>';$$('[data-remind]').forEach(btn=>btn.onclick=()=>openReminder([btn.dataset.remind]))}
+function pending(){const b=$('#pending');if(!b)return;const list=yet();b.classList.add('pendingList');b.innerHTML=list.length?list.map((p,i)=>{const s=submissionMap[p.id]||{};const reminder=s.lastReminderAt?`<span class="reminderState">最終催促：${escapeHtml(fmtDate(s.lastReminderAt))}</span>`:'';return `<div class="row">${adminAvatarHtml(p,i%3===1?'v':i%3===2?'b':'')}<div class="grow"><div class="name">${escapeHtml(p.name)}</div><div class="meta"><span>希望シフト未提出</span><span class="emailState">${escapeHtml(p.email||'メール未登録')}</span>${reminder}</div></div><button class="mini" data-remind="${p.id}">個別文をコピー</button></div>`}).join(''):'<div class="empty">全員提出済みです</div>';$$('[data-remind]').forEach(btn=>btn.onclick=()=>openReminder([btn.dataset.remind]))}
 function members(){
   const b=$('#memberList');if(!b)return;
   b.classList.add('memberList');
@@ -1095,7 +1095,74 @@ async function saveDeadlineSetting(){
 }
 function renderAll(){monthText();counts();pending();members();requestTable();table();renderTimeGuide();renderNotices();pub();renderSaveState();renderDeadline()}
 
-function openReminder(ids){reminderTargets=ids;const targets=people.filter(p=>ids.includes(p.id));$('#reminderTitle').textContent=targets.length===1?'催促を送信':'まとめて催促';$('#reminderCopy').innerHTML=targets.length===1?`<span class="confirmTarget">${escapeHtml(targets[0].name)}さん</span>に催促を記録しますか？`:`未提出の<span class="confirmTarget">${targets.length}名</span>に催促を記録しますか？`;$('#reminderShade').classList.add('on')}
+
+function japaneseDateLabel(value){
+  const d=value?new Date(value):null;
+  if(!d||Number.isNaN(d.getTime()))return '未設定';
+  const weekdays=['日','月','火','水','木','金','土'];
+  return `${d.getMonth()+1}月${d.getDate()}日（${weekdays[d.getDay()]}）`;
+}
+function targetMonthLabel(){
+  return `${year}年${month+1}月分`;
+}
+function buildReminderText(targets){
+  const deadline=monthlySetting?.deadline?new Date(monthlySetting.deadline):null;
+  const deadlineLabel=japaneseDateLabel(monthlySetting?.deadline);
+  const now=new Date();
+  let deadlineSentence='';
+  if(!deadline||Number.isNaN(deadline.getTime())){
+    deadlineSentence='提出期限を確認のうえ、ShiftMateから提出をお願いします！';
+  }else{
+    const sameDay=now.getFullYear()===deadline.getFullYear()&&now.getMonth()===deadline.getMonth()&&now.getDate()===deadline.getDate();
+    if(now.getTime()>deadline.getTime()){
+      deadlineSentence=`提出期限（${deadlineLabel}）を過ぎています。\nまだの方は確認後、ShiftMateから提出をお願いします！`;
+    }else if(sameDay){
+      deadlineSentence='本日が提出期限です。\nまだの方は本日中にShiftMateから提出をお願いします！';
+    }else{
+      deadlineSentence=`提出期限は${deadlineLabel}です。\n期限までにShiftMateから提出をお願いします！`;
+    }
+  }
+  if(targets.length===1){
+    return `${targets[0].name}さん、お疲れさまです！\n\n${targetMonthLabel()}の希望シフトが、現在まだ未提出になっています。\n\n${deadlineSentence}\n\nすでに提出済みの場合は、行き違いでしたらすみません🙇`;
+  }
+  const names=targets.map(p=>`・${p.name}さん`).join('\n');
+  return `お疲れさまです！\n\n${targetMonthLabel()}の希望シフトについて、\n現在、下記の方が未提出になっています。\n\n${names}\n\n${deadlineSentence}\n\nすでに提出済みの場合は、行き違いでしたらすみません🙇`;
+}
+async function copyText(value){
+  const text=String(value||'');
+  if(!text)throw new Error('コピーする文章がありません');
+  if(navigator.clipboard&&window.isSecureContext){
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const area=document.createElement('textarea');
+  area.value=text;
+  area.style.position='fixed';
+  area.style.opacity='0';
+  document.body.appendChild(area);
+  area.focus();
+  area.select();
+  const ok=document.execCommand('copy');
+  area.remove();
+  if(!ok)throw new Error('コピーできませんでした');
+}
+function loginUrl(){
+  return new URL('./',window.location.href).href;
+}
+function buildPasswordLineText(person,password){
+  return `${person.name}さん、お疲れさまです！\n\nShiftMateのログイン用仮パスワードを発行しました。\n\n【ログインメールアドレス】\n${person.email}\n\n【仮パスワード】\n${password}\n\n【ShiftMate】\n${loginUrl()}\n\nログイン後、新しいパスワードへの変更をお願いします！`;
+}
+
+function openReminder(ids){
+  reminderTargets=ids;
+  const targets=people.filter(p=>ids.includes(p.id));
+  $('#reminderTitle').textContent=targets.length===1?'個別用催促文':'グループ用催促文';
+  $('#reminderCopy').innerHTML=targets.length===1
+    ?`<span class="confirmTarget">${escapeHtml(targets[0].name)}さん</span>へ送る文章です。`
+    :`未提出の<span class="confirmTarget">${targets.length}名</span>をまとめた文章です。`;
+  $('#reminderTextPreview').value=buildReminderText(targets);
+  $('#reminderShade').classList.add('on');
+}
 function closeReminder(){$('#reminderShade').classList.remove('on');reminderTargets=[]}
 function openMember(id=null){
   editId=id;
@@ -1115,7 +1182,7 @@ function openMember(id=null){
     const status=$('#loginStatus');
     status.textContent=p.loginConfigured?(p.firstPasswordChangeRequired?'初回変更待ち':'設定済み'):'未設定';
     status.classList.toggle('unset',!p.loginConfigured||p.firstPasswordChangeRequired);
-    $('#loginSetupHelp').textContent=p.loginConfigured?'必要に応じて仮パスワードを再発行できます。':'メールアドレスを入力して保存すると初回ログイン情報を発行します。';
+    $('#loginSetupHelp').textContent=p.loginConfigured?'必要に応じて仮パスワードを再発行し、LINE用の案内文をコピーできます。':'メールアドレスを入力して保存すると初回ログイン情報を発行します。';
     $('#resetMemberPassword').classList.toggle('hide',!p.loginConfigured);
   }
   $('#memberShade').classList.add('on')
@@ -1127,8 +1194,10 @@ async function refreshMembers(){
   applyMembers(rows);counts();pending();members();requestTable();table();
 }
 function showTemporaryPassword(name,password){
+  const person=people.find(p=>p.name===name)||{name,email:$('#mEmail')?.value?.trim()||''};
   $('#passwordResultName').textContent=`${name}さんの仮パスワード`;
   $('#passwordResultValue').textContent=password;
+  $('#passwordLinePreview').value=buildPasswordLineText(person,password);
   $('#passwordResultShade').classList.add('on');
 }
 function closePasswordResult(){$('#passwordResultShade').classList.remove('on')}
@@ -1178,12 +1247,25 @@ $$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.class
 $$('.prev').forEach(b=>b.onclick=async()=>{if(!confirmDiscardChanges())return;if(--month<0){month=11;year--}await loadMonth(false)});$$('.next').forEach(b=>b.onclick=async()=>{if(!confirmDiscardChanges())return;if(++month>11){month=0;year++}await loadMonth(false)});
 $('#remindAll').onclick=()=>{const ids=yet().map(p=>p.id);if(!ids.length)return say('未提出者はいません');openReminder(ids)};
 $('#cancelReminder').onclick=$('#cancelReminder2').onclick=closeReminder;
-$('#sendReminder').onclick=async()=>{try{const ids=[...reminderTargets];await api('apiAdminSendSubmissionReminder',token,monthKey(),ids);closeReminder();say(`${ids.length}名の催促を記録しました`)}catch(e){say(e.message)}};
+$('#sendReminder').onclick=async()=>{
+  try{
+    const text=$('#reminderTextPreview').value;
+    await copyText(text);
+    const count=reminderTargets.length;
+    closeReminder();
+    say(count>1?`${count}名分のグループ用催促文をコピーしました`:'個別用の催促文をコピーしました');
+  }catch(e){say(e.message||'コピーできませんでした')}
+};
 $('#fab').onclick=()=>openMember();$('#cancelMember').onclick=$('#closeMember').onclick=closeMember;
 $('#saveMember').onclick=async()=>{if(memberSaving)return;const btn=$('#saveMember');try{const name=$('#mName').value.trim(),email=$('#mEmail').value.trim();if(!name)return say('氏名を入力してください');if(!editId&&!email)return say('新規メンバーにはメールアドレスを入力してください');memberSaving=true;btn.disabled=true;btn.textContent='保存中...';$('#memberBusyNote')?.classList.add('on');const saved=await api('apiAdminSaveMember',token,{staffId:editId||'',name,email,role:$('#mAdmin').checked?'admin':'staff',socialInsurance:$('#mInsured').checked,isNew:$('#mNew').checked,active:true});closeMember();if(saved.temporaryPassword)showTemporaryPassword(saved.name||name,saved.temporaryPassword);else say('メンバー情報を更新しました');try{await refreshMembers()}catch(refreshError){console.error('[ShiftMate] メンバー再読込',refreshError)}}catch(e){say(e.message)}finally{memberSaving=false;btn.disabled=false;btn.textContent='スタッフ情報を保存';$('#memberBusyNote')?.classList.remove('on')}};
 $('#resetMemberPassword').onclick=async()=>{if(memberSaving)return;const btn=$('#resetMemberPassword');try{const p=people.find(x=>x.id===editId);if(!p?.email)return say('先にメールアドレスを登録してください');memberSaving=true;btn.disabled=true;btn.textContent='発行中...';$('#saveMember').disabled=true;$('#memberBusyNote')?.classList.add('on');const result=await api('apiAdminResetPassword',token,editId);closeMember();showTemporaryPassword(p.name,result.temporaryPassword);try{await refreshMembers()}catch(refreshError){console.error('[ShiftMate] メンバー再読込',refreshError)}}catch(e){say(e.message)}finally{memberSaving=false;btn.disabled=false;btn.textContent='仮パスワードを再発行';$('#saveMember').disabled=false;$('#memberBusyNote')?.classList.remove('on')}};
 $('#closePasswordResult').onclick=$('#donePasswordResult').onclick=closePasswordResult;
-$('#copyPasswordResult').onclick=async()=>{try{await navigator.clipboard.writeText($('#passwordResultValue').textContent);say('仮パスワードをコピーしました')}catch(e){say('コピーできませんでした')}};
+$('#copyPasswordResult').onclick=async()=>{
+  try{
+    await copyText($('#passwordLinePreview').value);
+    say('LINE用のログイン案内をコピーしました');
+  }catch(e){say(e.message||'コピーできませんでした')}
+};
 $('#deleteMember').onclick=openDeleteMember;$('#cancelDeleteMember').onclick=$('#cancelDeleteMember2').onclick=closeDeleteMember;
 $('#confirmDeleteMember').onclick=async()=>{try{await api('apiAdminDeleteMember',token,editId);closeDeleteMember();closeMember();await loadMonth(false);say('メンバーを無効化しました')}catch(e){say(e.message)}};
 $('#addNotice').onclick=()=>openNotice();$('#closeNotice').onclick=closeNotice;$('#cancelCloseNotice').onclick=closeNotice;
