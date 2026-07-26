@@ -507,11 +507,11 @@ body.monthLoading #requestView .tableCard,body.monthLoading #draftView .tableCar
 
 
 .businessDayBtn{border:1px solid #cfe5df;border-radius:13px;background:#fff;color:var(--md);padding:10px 13px;font-weight:850}
-.businessDayGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:12px}
+.businessDayWeek{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:12px}.businessDayWeek span{text-align:center;font-size:10px;font-weight:850;color:var(--mut)}.businessDayWeek span:first-child{color:#cf626a}.businessDayWeek span:last-child{color:#587dab}.businessDayGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:7px}.businessDayBlank{min-height:55px}
 .businessDayCell{min-height:55px;border:1px solid var(--line);border-radius:13px;background:#fff;padding:7px 4px;text-align:center}
 .businessDayCell strong{display:block;font-size:12px}.businessDayCell small{display:block;margin-top:3px;color:var(--mut);font-size:9px}
 .businessDayCell.holiday{background:#fff0f1;border-color:#f0c9cd;color:#c85f68}.businessDayCell.closed{background:#ef4b4b;border-color:#d83939;color:#fff}
-.businessDayLegend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:10px;color:var(--mut)}
+#saveBusinessDays:disabled{opacity:.55;cursor:not-allowed}.businessDayLegend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:10px;color:var(--mut)}
 .businessDayLegend span{padding:6px 9px;border-radius:999px;background:#f5f8f7}.businessDayLegend .holiday{background:#fff0f1;color:#c85f68}.businessDayLegend .closed{background:#ef4b4b;color:#fff}
 .cell.h.holiday{background:#fff1f2!important;color:#cf626a}.cell.closedDay{background:#ffe1e1!important;color:#b7333e!important}.cell.edit.closedDay{cursor:not-allowed}
 
@@ -621,7 +621,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <div class="deadlinePreview"><strong id="businessDaysMonthLabel"></strong><span>提出期限と営業日情報をまとめて設定します。</span></div>
 <div class="field"><label>希望シフト提出期限</label><div class="deadlineDateRow"><input type="date" id="monthlyDeadlineDate"><input type="time" id="monthlyDeadlineTime" value="23:59"></div></div>
 <p class="confirmCopy" style="margin-top:16px">日付をタップして、通常 → 祝日 → 休館日を切り替えます。</p>
-<div class="businessDayGrid" id="businessDayGrid"></div>
+<div class="businessDayWeek"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="businessDayGrid" id="businessDayGrid"></div>
 <div class="businessDayLegend"><span>通常</span><span class="holiday">祝日</span><span class="closed">休館日</span></div>
 <p class="publishModalNote">祝日は日曜と同じ赤系表示、休館日はシフト入力不可になります。提出期限を過ぎるとスタッフの編集・提出を締め切ります。</p>
 <div class="mactions"><button class="secondary" id="cancelBusinessDays">キャンセル</button><button class="primary" id="saveBusinessDays">保存する</button></div></div></div>
@@ -687,6 +687,12 @@ function closeBusinessDays(){$('#businessDaysShade').classList.remove('on')}
 function renderBusinessDayGrid(){
   const host=$('#businessDayGrid');host.innerHTML='';
   const holidays=new Set(businessDayDraft.holidays),closed=new Set(businessDayDraft.closedDays);
+  const firstWeekday=new Date(year,month,1).getDay();
+  for(let i=0;i<firstWeekday;i++){
+    const blank=document.createElement('div');
+    blank.className='businessDayBlank';
+    host.appendChild(blank);
+  }
   for(let d=1;d<=daysInMonth();d++){
     const key=dateKey(d),wd=new Date(year,month,d).getDay();
     const btn=document.createElement('button');btn.type='button';
@@ -696,8 +702,10 @@ function renderBusinessDayGrid(){
       if(closed.has(key)){closed.delete(key)}
       else if(holidays.has(key)){holidays.delete(key);closed.add(key)}
       else holidays.add(key);
-      businessDayDraft={holidays:[...holidays].sort(),closedDays:[...closed].sort()};renderBusinessDayGrid();
-    };host.appendChild(btn);
+      businessDayDraft={holidays:[...holidays].sort(),closedDays:[...closed].sort()};
+      renderBusinessDayGrid();
+    };
+    host.appendChild(btn);
   }
 }
 
@@ -1409,18 +1417,39 @@ $('#generateDraft').onclick=()=>{$('#generateDraftShade').classList.add('on')};$
 
 $('#closeBusinessDays').onclick=$('#cancelBusinessDays').onclick=closeBusinessDays;
 $('#saveBusinessDays').onclick=async()=>{
+  const btn=$('#saveBusinessDays');
+  if(btn.disabled)return;
   const date=$('#monthlyDeadlineDate').value,time=$('#monthlyDeadlineTime').value||'23:59';
   if(!date)return say('提出期限の日付を入力してください');
+  const deadline=new Date(`${date}T${time}:00`);
+  const draft={
+    deadline:deadline.toISOString(),
+    holidays:[...businessDayDraft.holidays],
+    closedDays:[...businessDayDraft.closedDays]
+  };
+  btn.disabled=true;
+  btn.textContent='保存中...';
   try{
-    const deadline=new Date(`${date}T${time}:00`);
-    monthlySetting=await api('apiAdminSaveMonthlySetting',token,monthKey(),{
-      deadline:deadline.toISOString(),
-      holidays:businessDayDraft.holidays,
-      closedDays:businessDayDraft.closedDays
-    });
-    closeBusinessDays();renderDeadline();table();requestTable();say('月間設定を保存しました');
+    const saved=await api('apiAdminSaveMonthlySetting',token,monthKey(),draft);
+    monthlySetting={
+      ...(monthlySetting||{}),
+      ...(saved||{}),
+      deadline:draft.deadline,
+      holidays:draft.holidays,
+      closedDays:draft.closedDays
+    };
     window.ShiftMateCache?.clear?.();
-  }catch(e){say(e.message||'月間設定を保存できませんでした')}
+    closeBusinessDays();
+    renderDeadline();
+    table();
+    requestTable();
+    say('月間設定を保存しました');
+  }catch(e){
+    say(e.message||'月間設定を保存できませんでした');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='保存する';
+  }
 };
 
 $('#openDeadlineSetting').onclick=openBusinessDays;
