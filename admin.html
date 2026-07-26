@@ -1298,7 +1298,7 @@ function createShiftShareCanvas(){
   const days=daysInMonth(),members=shiftTablePeople();
 
   // 共有画像は、補助表を小さく・メインシフトを大きく見せる専用レイアウト。
-  const roleW=44,nameW=154,dayW=38,totalW=78,rowH=60,headerH=64;
+  const roleW=44,nameW=166,dayW=39,totalW=78,rowH=64,headerH=64;
   const mainW=roleW+nameW+days*dayW+totalW;
   const padX=28,padTop=24,padBottom=24,titleH=72,guideGap=18,guideH=160;
   const mainH=headerH+members.length*rowH;
@@ -1379,11 +1379,11 @@ function createShiftShareCanvas(){
 
   members.forEach((p,i)=>{
     const y=headerY+headerH+i*rowH;
-    const base=i%2?color.stripe:color.paper;
+    const base=color.paper;
     rect(x0,y,roleW,rowH,base,color.line);
-    text(p.type==='insured'?'社保':p.newcomer?'新人':'',x0+roleW/2,y+rowH/2,9,850);
+    text(p.type==='insured'?'社保':p.newcomer?'新人':'',x0+roleW/2,y+rowH/2,9,850,color.ink);
     rect(x0+roleW,y,nameW,rowH,base,color.line);
-    text(p.name,x0+roleW+10,y+rowH/2,15,900,color.ink,'left');
+    text(p.name,x0+roleW+12,y+rowH/2,18,900,color.ink,'left');
 
     let count=0,hours=0;
     for(let d=1;d<=days;d++){
@@ -1391,7 +1391,7 @@ function createShiftShareCanvas(){
       if(closed)continue;
       const [fill,ink]=cellColor(code);
       rect(x,y,dayW,rowH,fill,color.lineSoft);
-      text(code,x+dayW/2,y+rowH/2,17,900,ink);
+      text(code,x+dayW/2,y+rowH/2,20,900,ink);
       if(code&&!['休','希','有','○'].includes(code)){count++;hours+=hoursForCode(code)}
     }
     rect(totalX,y,totalW,rowH,base,color.line);
