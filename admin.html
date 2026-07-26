@@ -937,7 +937,7 @@ function buildShiftTable(target,data,editable=false){
     const w=new Date(year,month,d).getDay(),holiday=isHolidayDay(d),closed=isClosedDay(d);
     b.insertAdjacentHTML(
       'beforeend',
-      `<div class="cell h ${w===0?'sun':w===6?'sat':''}">${d}<br><small>${DAY[w]}</small></div>`
+      `<div class="cell h ${closed?'closedDay':holiday||w===0?'holiday sun':w===6?'sat':''}">${d}<br><small>${closed?'休館':DAY[w]}</small></div>`
     );
   }
 
@@ -960,7 +960,7 @@ function buildShiftTable(target,data,editable=false){
       const raw=data[k]||'';
       b.insertAdjacentHTML(
         'beforeend',
-        `<div class="cell ${editable?'edit':''} ${isClosedDay(d)?'closedDay':''} ${cellClass(raw,alt)}" ${editable?`data-k="${k}" data-day="${d}"`:''}>${escapeHtml(raw)}</div>`
+        `<div class="cell ${editable?'edit':''} ${isClosedDay(d)?'closedDay':cellClass(raw,alt)}" ${editable?`data-k="${k}" data-day="${d}"`:''}>${isClosedDay(d)?'休館':escapeHtml(raw)}</div>`
       );
     }
 
@@ -1336,17 +1336,33 @@ function createShiftShareCanvas(){
     rect(totalX,y,totalW,rowH,ri===0?'#edf8f4':'#fff7e7');text(ri===0?'希望比':`${sum}名`,totalX+totalW/2,y+rowH/2,10,850);
   });
   const guideY=headerY+mainH+18;
-  const sectionW=(mainW-24)/3;
+  const sectionGap=10,sectionW=(mainW-sectionGap*3)/4;
   function guideBox(x,title,rows){
     rect(x,guideY,sectionW,guideH-28,'#fff');
-    rect(x,guideY,sectionW,30,'#eef5f2');text(title,x+sectionW/2,guideY+15,11,850);
-    rows.forEach((r,i)=>{const yy=guideY+30+i*24;if(yy+24>guideY+guideH-28)return;rect(x,yy,sectionW,24,i%2?'#fafbfa':'#fff');text(r[0],x+22,yy+12,10,850,ink,'left');text(r[1],x+sectionW-10,yy+12,9,700,'#555','right')})
+    rect(x,guideY,sectionW,30,'#eef5f2');text(title,x+sectionW/2,guideY+15,10,850);
+    rows.forEach((r,i)=>{
+      const yy=guideY+30+i*24;
+      if(yy+24>guideY+guideH-28)return;
+      rect(x,yy,sectionW,24,i%2?'#fafbfa':'#fff');
+      text(r[0],x+10,yy+12,9,850,ink,'left');
+      text(r[1],x+sectionW-8,yy+12,8,700,'#555','right');
+    });
   }
-  const patterns=shiftPatterns.map(p=>[p.code,`${p.startTime||''}〜${p.endTime||''}  ${p.workingTime||''}`]);
-  guideBox(x0,'勤務区分 A〜F',patterns.filter(r=>'ABCDEF'.includes(r[0])));
-  guideBox(x0+sectionW+12,'勤務区分 G〜I',patterns.filter(r=>'GHI'.includes(r[0])));
-  const special=[['希','希望休'],['休','休み'],['有','有給'],['祝日',(monthlySetting?.holidays||[]).map(v=>Number(v.slice(-2))).join('・')||'なし'],['休館日',(monthlySetting?.closedDays||[]).map(v=>Number(v.slice(-2))).join('・')||'なし']];
-  guideBox(x0+(sectionW+12)*2,'休み・営業日設定',special);
+  const patterns=shiftPatterns.map(p=>[p.code,`${p.startTime||''}〜${p.endTime||''} ${p.workingTime||''}`]);
+  const holidayRows=[
+    ['祝日',(monthlySetting?.holidays||[]).map(v=>`${Number(v.slice(-2))}日`).join('・')||'なし'],
+    ['休館日',(monthlySetting?.closedDays||[]).map(v=>`${Number(v.slice(-2))}日`).join('・')||'なし']
+  ];
+  const leaveRows=[
+    ['休','休日'],
+    ['希','希望休'],
+    ['有','有給'],
+    ['○','終日勤務可']
+  ];
+  guideBox(x0,'祝日・休館日',holidayRows);
+  guideBox(x0+sectionW+sectionGap,'勤務区分 A〜F',patterns.filter(r=>'ABCDEF'.includes(r[0])));
+  guideBox(x0+(sectionW+sectionGap)*2,'勤務区分 G〜I',patterns.filter(r=>'GHI'.includes(r[0])));
+  guideBox(x0+(sectionW+sectionGap)*3,'休み表',leaveRows);
   text('ShiftMate',x0,height-pad/2,10,700,'#71817b','left');
   return canvas;
 }

@@ -561,8 +561,18 @@ function renderConfirmed(){
  const people=peopleSource.map(person=>({person,values:Object.fromEntries(rows.filter(r=>r.staffId===person.staffId).map(r=>[Number(r.date.slice(-2)),r.code]))}));
  const host=$("#confirmedTable");host.innerHTML="";const table=document.createElement("table");table.className="confirmed-native-table";
  let head='<thead><tr><th class="status-col" rowspan="2">区分</th><th class="name-col" rowspan="2">スタッフ名</th>';
- for(let d=1;d<=days;d++)head+=`<th>${d}</th>`;head+='<th class="total-col" rowspan="2">勤務</th></tr><tr>';
- for(let d=1;d<=days;d++)head+=`<th>${["日","月","火","水","木","金","土"][new Date(y,m,d).getDay()]}</th>`;head+='</tr></thead>';
+ for(let d=1;d<=days;d++){
+  const wd=new Date(y,m,d).getDay(),key=`${mk}-${String(d).padStart(2,"0")}`;
+  const holiday=(monthlySetting?.holidays||[]).includes(key),closed=(monthlySetting?.closedDays||[]).includes(key);
+  head+=`<th class="${closed?'closed':holiday||wd===0?'holiday sun':wd===6?'sat':''}">${d}</th>`;
+ }
+ head+='<th class="total-col" rowspan="2">勤務</th></tr><tr>';
+ for(let d=1;d<=days;d++){
+  const wd=new Date(y,m,d).getDay(),key=`${mk}-${String(d).padStart(2,"0")}`;
+  const holiday=(monthlySetting?.holidays||[]).includes(key),closed=(monthlySetting?.closedDays||[]).includes(key);
+  head+=`<th class="${closed?'closed':holiday||wd===0?'holiday sun':wd===6?'sat':''}">${closed?'休館':["日","月","火","水","木","金","土"][wd]}</th>`;
+ }
+ head+='</tr></thead>';
  let body="<tbody>";people.forEach(({person,values:map})=>{body+=`<tr><td class="status-col">${person.socialInsurance?'<span class="confirmed-status-mark insured">社</span>':person.isNew?'<span class="confirmed-status-mark newcomer">新</span>':""}</td><td class="name-col"><strong>${esc(person.name)}</strong></td>`;let count=0;
   for(let d=1;d<=days;d++){const key=`${mk}-${String(d).padStart(2,"0")}`,closed=(monthlySetting?.closedDays||[]).includes(key),c=map[d]||"";if(c&&!["休","有"].includes(c)&&!closed)count++;body+=`<td class="${closed?'closed':confirmedClass(c)}">${closed?'休館':esc(c)}</td>`}body+=`<td class="total-col">${count}日</td></tr>`});
  body+="</tbody>";table.innerHTML=head+body;host.appendChild(table)
