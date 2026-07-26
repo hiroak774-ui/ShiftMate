@@ -1297,9 +1297,9 @@ function closeShareShift(){$('#shareShiftShade').classList.remove('on')}
 function createShiftShareCanvas(){
   const days=daysInMonth(),members=shiftTablePeople();
   // Excelのシフト表に近い密度になるよう、日付列と余白を締める。
-  const roleW=36,nameW=126,dayW=35,totalW=64,rowH=38,headerH=46;
+  const roleW=38,nameW=132,dayW=34,totalW=66,rowH=46,headerH=52;
   const mainW=roleW+nameW+days*dayW+totalW;
-  const pad=22,titleH=58,summaryRows=2,guideGap=14,guideH=178;
+  const pad=22,titleH=62,summaryRows=0,guideGap=16,guideH=150;
   const mainH=headerH+(members.length+summaryRows)*rowH;
   const width=pad*2+mainW,height=pad*2+titleH+mainH+guideGap+guideH;
   const scale=Math.min(2,window.devicePixelRatio||1),canvas=document.createElement('canvas');
@@ -1329,9 +1329,9 @@ function createShiftShareCanvas(){
     return parts.length===3?`${Number(parts[1])}月${Number(parts[2])}日`:String(value||'');
   }
   ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
-  text(`${year} 年　${month+1} 月`,x0+8,pad+17,15,800,ink,'left');
-  text('勤務シフト表',width/2,pad+19,20,900);
-  text('ShiftMate',width-pad,pad+17,13,800,'#40a991','right');
+  text(`${year} 年　${month+1} 月`,x0+8,pad+19,16,800,ink,'left');
+  text('勤務シフト表',width/2,pad+21,22,900);
+  text('ShiftMate',width-pad,pad+19,14,800,'#40a991','right');
 
   const headerY=y0;
   rect(x0,headerY,roleW,headerH,'#f0f1f0');text('役職',x0+roleW/2,headerY+headerH/2,9,800);
@@ -1340,8 +1340,8 @@ function createShiftShareCanvas(){
     const x=x0+roleW+nameW+(d-1)*dayW,wd=new Date(year,month,d).getDay(),key=dateKey(d);
     const closed=closedDays.has(key),holiday=holidays.has(key);
     rect(x,headerY,dayW,headerH,closed?'#f04a4a':holiday||wd===0?'#fff0f1':wd===6?'#eef5ff':'#f0f1f0');
-    text(d,x+dayW/2,headerY+15,10,850,closed?'#fff':holiday||wd===0?'#cf5862':wd===6?'#587dab':ink);
-    text(closed?'休館':DAY[wd],x+dayW/2,headerY+32,8,800,closed?'#fff':holiday||wd===0?'#cf5862':wd===6?'#587dab':ink);
+    text(d,x+dayW/2,headerY+17,11,850,closed?'#fff':holiday||wd===0?'#cf5862':wd===6?'#587dab':ink);
+    text(closed?'休館':DAY[wd],x+dayW/2,headerY+37,9,800,closed?'#fff':holiday||wd===0?'#cf5862':wd===6?'#587dab':ink);
   }
   const totalX=x0+roleW+nameW+days*dayW;
   rect(totalX,headerY,totalW,headerH,'#f0f1f0');text('勤務',totalX+totalW/2,headerY+14,9,800);text('日数/時間',totalX+totalW/2,headerY+31,8,800);
@@ -1349,15 +1349,15 @@ function createShiftShareCanvas(){
   members.forEach((p,i)=>{
     const y=headerY+headerH+i*rowH,base=p.type==='insured'?peach:(i%2?light:'#fff');
     rect(x0,y,roleW,rowH,base);text(p.type==='insured'?'社保':p.newcomer?'新人':'',x0+roleW/2,y+rowH/2,8,850);
-    rect(x0+roleW,y,nameW,rowH,base);text(p.name,x0+roleW+7,y+rowH/2,10,850,ink,'left');
+    rect(x0+roleW,y,nameW,rowH,base);text(p.name,x0+roleW+8,y+rowH/2,11,850,ink,'left');
     let count=0,hours=0;
     for(let d=1;d<=days;d++){
       const x=x0+roleW+nameW+(d-1)*dayW,key=dateKey(d),closed=closedDays.has(key),code=draftShift[`${p.id}-${d}`]||'';
       if(closed)continue;
-      const [fill,color]=cellColor(code);rect(x,y,dayW,rowH,fill);text(code,x+dayW/2,y+rowH/2,10,900,color);
+      const [fill,color]=cellColor(code);rect(x,y,dayW,rowH,fill);text(code,x+dayW/2,y+rowH/2,12,900,color);
       if(code&&!['休','希','有','○'].includes(code)){count++;hours+=hoursForCode(code)}
     }
-    rect(totalX,y,totalW,rowH,base);text(`${count}日`,totalX+totalW/2,y+13,9,850);text(`${hours%1?hours.toFixed(1):hours}h`,totalX+totalW/2,y+27,8,750,'#4d5a56');
+    rect(totalX,y,totalW,rowH,base);text(`${count}日`,totalX+totalW/2,y+16,10,850);text(`${hours%1?hours.toFixed(1):hours}h`,totalX+totalW/2,y+33,9,750,'#4d5a56');
   });
 
   // 休館日はスタッフ行全体を縦に統合し、縦書きで表示する。
@@ -1370,30 +1370,19 @@ function createShiftShareCanvas(){
     chars.forEach((ch,i)=>text(ch,x+dayW/2,center+(i-1)*gap,11,900,'#fff'));
   });
 
-  ['人数差','カット'].forEach((label,ri)=>{
-    const y=headerY+headerH+(members.length+ri)*rowH;
-    rect(x0,y,roleW+nameW,rowH,ri===0?'#edf8f4':'#fff7e7');text(label,x0+(roleW+nameW)/2,y+rowH/2,9,850);
-    let sum=0;
-    for(let d=1;d<=days;d++){
-      const x=x0+roleW+nameW+(d-1)*dayW,s=dayShiftSummary(d),v=ri===0?s.balance:s.cut;
-      if(!s.closed&&ri===1)sum+=v;
-      rect(x,y,dayW,rowH,s.closed?'#f04a4a':ri===0?'#f2fbf8':'#fff9ed');
-      text(s.closed?'休館':ri===0?summaryBalanceLabel(v):(v||'—'),x+dayW/2,y+rowH/2,s.closed?7:9,850,s.closed?'#fff':ri===0?'#27886f':'#9a6a14');
-    }
-    rect(totalX,y,totalW,rowH,ri===0?'#edf8f4':'#fff7e7');text(ri===0?'希望比':`${sum}名`,totalX+totalW/2,y+rowH/2,8,850);
-  });
 
+  // 共有画像では人数差・カットを表示せず、シフト表を大きく見せる。
   const guideY=headerY+mainH+guideGap,sectionGap=8,sectionW=(mainW-sectionGap*3)/4,boxH=guideH-18;
   function simpleTable(x,headers,rows,widths){
-    const headerHeight=27,rowHeight=Math.min(24,(boxH-headerHeight)/Math.max(rows.length,1));
+    const headerHeight=25,rowHeight=Math.min(22,(boxH-headerHeight)/Math.max(rows.length,1));
     let cx=x;
     headers.forEach((h,i)=>{const w=sectionW*widths[i];rect(cx,guideY,w,headerHeight,'#eef5f2');text(h,cx+w/2,guideY+headerHeight/2,7.5,850);cx+=w});
     rows.forEach((row,ri)=>{let xx=x;row.forEach((value,i)=>{const w=sectionW*widths[i],yy=guideY+headerHeight+ri*rowHeight;rect(xx,yy,w,rowHeight,ri%2?'#fafbfa':'#fff');text(value,xx+w/2,yy+rowHeight/2,7.5,i===0?850:700);xx+=w})});
   }
   function titledList(x,title,rows){
-    rect(x,guideY,sectionW,boxH,'#fff');rect(x,guideY,sectionW,27,'#eef5f2');text(title,x+sectionW/2,guideY+13.5,8.5,850);
-    const rowHeight=25;
-    rows.forEach((r,i)=>{const yy=guideY+27+i*rowHeight;if(yy+rowHeight>guideY+boxH)return;rect(x,yy,sectionW,rowHeight,i%2?'#fafbfa':'#fff');text(r[0],x+8,yy+rowHeight/2,8,850,ink,'left');text(r[1],x+sectionW-7,yy+rowHeight/2,7.5,700,'#555','right')});
+    rect(x,guideY,sectionW,boxH,'#fff');rect(x,guideY,sectionW,25,'#eef5f2');text(title,x+sectionW/2,guideY+12.5,8.5,850);
+    const rowHeight=22;
+    rows.forEach((r,i)=>{const yy=guideY+25+i*rowHeight;if(yy+rowHeight>guideY+boxH)return;rect(x,yy,sectionW,rowHeight,i%2?'#fafbfa':'#fff');text(r[0],x+8,yy+rowHeight/2,8,850,ink,'left');text(r[1],x+sectionW-7,yy+rowHeight/2,7.5,700,'#555','right')});
   }
   function patternRows(codes){return shiftPatterns.filter(p=>codes.includes(String(p.code||''))).map(p=>[
     p.code,
