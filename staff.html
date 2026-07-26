@@ -550,7 +550,7 @@ function confirmedClass(code){if(!code)return"empty";if(code==="休")return"off"
 function renderConfirmed(){
  const y=confirmedDate.getFullYear(),m=confirmedDate.getMonth(),days=new Date(y,m+1,0).getDate();$("#confirmedMonthTitle").textContent=`${y}年${m+1}月`;
  const mk=monthKey(confirmedDate), rows=confirmedRows.filter(r=>r.targetMonth===mk||r.date.startsWith(mk+"-"));
- if(monthlySetting?.publicationStatus!=="公開済み"&&monthlySetting?.publicationStatus!=="公開"){
+ if(!["公開中","公開済み","公開"].includes(monthlySetting?.publicationStatus)){
   $("#confirmedTable").innerHTML='<div class="empty-state">この月の確定シフトはまだ公開されていません。</div>';return
  }
  const peopleSource=confirmedView==="personal"?[user]:(members.length?members:[user]);
@@ -676,7 +676,7 @@ if(isRoleSwitchEntry){
  window.ShiftMateMotion?.consumeTransition?.();
 }
 
-$("#refreshDataButton")?.addEventListener("click",async()=>{const button=$("#refreshDataButton");if(button?.classList.contains("isLoading"))return;button?.classList.add("isLoading");try{await loadMonth(viewDate,false,true);toast("最新の情報に更新しました")}finally{button?.classList.remove("isLoading")}});
+$("#refreshDataButton")?.addEventListener("click",async()=>{const button=$("#refreshDataButton");if(button?.classList.contains("isLoading"))return;button?.classList.add("isLoading");try{const confirmedActive=$("#confirmedPage")?.classList.contains("active");await loadMonth(confirmedActive?confirmedDate:viewDate,false,true);toast("最新の情報に更新しました")}finally{button?.classList.remove("isLoading")}});
 
 (async function init(){
  const now=new Date();
