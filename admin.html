@@ -1313,7 +1313,7 @@ function createShiftShareCanvas(){
   const color={
     bg:'#f7fbf9',paper:'#ffffff',ink:'#26332f',sub:'#64736e',
     mint:'#63c7ad',mintDark:'#2f9d82',mintPale:'#e9f7f2',
-    line:'#9dafaa',lineSoft:'#cbd8d4',insured:'#f8d5ad',stripe:'#f8faf9',
+    line:'#9dafaa',lineSoft:'#cbd8d4',stripe:'#f8faf9',
     sunday:'#fff0f1',sundayInk:'#cf5862',saturday:'#eef5ff',saturdayInk:'#587dab',
     closed:'#e95763',closedDark:'#bf3f4a'
   };
@@ -1379,11 +1379,11 @@ function createShiftShareCanvas(){
 
   members.forEach((p,i)=>{
     const y=headerY+headerH+i*rowH;
-    const base=p.type==='insured'?color.insured:(i%2?color.stripe:color.paper);
+    const base=i%2?color.stripe:color.paper;
     rect(x0,y,roleW,rowH,base,color.line);
     text(p.type==='insured'?'社保':p.newcomer?'新人':'',x0+roleW/2,y+rowH/2,9,850);
     rect(x0+roleW,y,nameW,rowH,base,color.line);
-    text(p.name,x0+roleW+10,y+rowH/2,13,850,color.ink,'left');
+    text(p.name,x0+roleW+10,y+rowH/2,15,900,color.ink,'left');
 
     let count=0,hours=0;
     for(let d=1;d<=days;d++){
@@ -1391,7 +1391,7 @@ function createShiftShareCanvas(){
       if(closed)continue;
       const [fill,ink]=cellColor(code);
       rect(x,y,dayW,rowH,fill,color.lineSoft);
-      text(code,x+dayW/2,y+rowH/2,15,900,ink);
+      text(code,x+dayW/2,y+rowH/2,17,900,ink);
       if(code&&!['休','希','有','○'].includes(code)){count++;hours+=hoursForCode(code)}
     }
     rect(totalX,y,totalW,rowH,base,color.line);
@@ -1406,7 +1406,7 @@ function createShiftShareCanvas(){
     const x=x0+roleW+nameW+(d-1)*dayW,y=headerY+headerH,h=members.length*rowH;
     rect(x,y,dayW,h,color.closed,color.closedDark);
     const chars=['休','館','日'],gap=Math.min(23,Math.max(16,h/5)),center=y+h/2;
-    chars.forEach((ch,i)=>text(ch,x+dayW/2,center+(i-1)*gap,13,900,'#fff'));
+    chars.forEach((ch,i)=>text(ch,x+dayW/2,center+(i-1)*gap,15,900,'#fff'));
   });
 
   // 下部情報は4列のまま、高さと文字を抑えてメイン表を主役にする。
