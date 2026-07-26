@@ -175,6 +175,10 @@ body{padding-bottom:calc(118px + env(safe-area-inset-bottom,0px))}
 
 .refreshDataButton{flex:0 0 auto;width:44px;height:44px;border:1px solid var(--line);border-radius:15px;background:#fff;display:grid;place-items:center;color:var(--mint-dark,#367f70);cursor:pointer;box-shadow:none}
 .refreshDataButton svg{width:20px;height:20px}.refreshDataButton.isLoading svg{animation:refreshSpin .8s linear infinite}@keyframes refreshSpin{to{transform:rotate(360deg)}}
+
+.confirmed-native-table th.holiday{background:#fff1f2;color:#cf626a}.confirmed-native-table th.closed{background:#ef4b4b;color:#fff}
+.confirmed-native-table td.closed{background:#ffe0e0;color:#b6333d;font-weight:850}
+
 </style>
   <script src="./config.js"></script>
   <script src="./api-client.js"></script>
@@ -560,7 +564,7 @@ function renderConfirmed(){
  for(let d=1;d<=days;d++)head+=`<th>${d}</th>`;head+='<th class="total-col" rowspan="2">勤務</th></tr><tr>';
  for(let d=1;d<=days;d++)head+=`<th>${["日","月","火","水","木","金","土"][new Date(y,m,d).getDay()]}</th>`;head+='</tr></thead>';
  let body="<tbody>";people.forEach(({person,values:map})=>{body+=`<tr><td class="status-col">${person.socialInsurance?'<span class="confirmed-status-mark insured">社</span>':person.isNew?'<span class="confirmed-status-mark newcomer">新</span>':""}</td><td class="name-col"><strong>${esc(person.name)}</strong></td>`;let count=0;
-  for(let d=1;d<=days;d++){const c=map[d]||"";if(c&&!["休","有"].includes(c))count++;body+=`<td class="${confirmedClass(c)}">${esc(c)}</td>`}body+=`<td class="total-col">${count}日</td></tr>`});
+  for(let d=1;d<=days;d++){const key=`${mk}-${String(d).padStart(2,"0")}`,closed=(monthlySetting?.closedDays||[]).includes(key),c=map[d]||"";if(c&&!["休","有"].includes(c)&&!closed)count++;body+=`<td class="${closed?'closed':confirmedClass(c)}">${closed?'休館':esc(c)}</td>`}body+=`<td class="total-col">${count}日</td></tr>`});
  body+="</tbody>";table.innerHTML=head+body;host.appendChild(table)
 }
 async function changeMonth(target,kind){

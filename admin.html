@@ -505,6 +505,16 @@ body.monthLoading #requestView .tableCard,body.monthLoading #draftView .tableCar
   main{padding:28px 24px calc(96px + env(safe-area-inset-bottom,0px))}
 }
 
+
+.businessDayBtn{border:1px solid #cfe5df;border-radius:13px;background:#fff;color:var(--md);padding:10px 13px;font-weight:850}
+.businessDayGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:12px}
+.businessDayCell{min-height:55px;border:1px solid var(--line);border-radius:13px;background:#fff;padding:7px 4px;text-align:center}
+.businessDayCell strong{display:block;font-size:12px}.businessDayCell small{display:block;margin-top:3px;color:var(--mut);font-size:9px}
+.businessDayCell.holiday{background:#fff0f1;border-color:#f0c9cd;color:#c85f68}.businessDayCell.closed{background:#ef4b4b;border-color:#d83939;color:#fff}
+.businessDayLegend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:10px;color:var(--mut)}
+.businessDayLegend span{padding:6px 9px;border-radius:999px;background:#f5f8f7}.businessDayLegend .holiday{background:#fff0f1;color:#c85f68}.businessDayLegend .closed{background:#ef4b4b;color:#fff}
+.cell.h.holiday{background:#fff1f2!important;color:#cf626a}.cell.closedDay{background:#ffe1e1!important;color:#b7333e!important}.cell.edit.closedDay{cursor:not-allowed}
+
 </style>
   <script src="./config.js"></script>
   <script src="./api-client.js"></script>
@@ -571,7 +581,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
   <button class="deadlineBtn" id="openDeadlineSetting">設定・変更</button>
 </div>
 <div id="requestView">
-  <div class="toolbar shiftToolbar"><div class="month"><button class="round prev">‹</button><strong class="monthText">2026年8月</strong><span class="monthLoadIndicator"><i class="monthLoadSpinner"></i>更新中</span><button class="round next">›</button></div><div style="display:flex;gap:7px"><button class="timeGuideBtn openTimeGuide">勤務区分・時間</button></div></div>
+  <div class="toolbar shiftToolbar"><div class="month"><button class="round prev">‹</button><strong class="monthText">2026年8月</strong><span class="monthLoadIndicator"><i class="monthLoadSpinner"></i>更新中</span><button class="round next">›</button></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="businessDayBtn" id="openBusinessDays">営業日設定</button><button class="timeGuideBtn openTimeGuide">勤務区分・時間</button></div></div>
   
   <div class="card tableCard"><div class="scroll shiftScroll"><div class="table shiftTable" id="requestTable"></div></div><div class="legend"><span><em class="sample hope">希</em>希望休</span><span><em class="sample off">休</em>休み</span><span>横にスクロールして月全体を確認できます</span></div></div>
   <div class="card generateCard"><div class="generateCopy"><strong>希望内容をもとにシフト表を作成</strong><span id="generateHint">提出された希望内容をもとに作成します。</span></div><button class="primary generateBtn" id="generateDraft"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"></path><circle cx="12" cy="12" r="3"></circle></svg>仮シフトを作成</button></div>
@@ -606,6 +616,8 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 
 <div class="shade" id="timeGuideShade"><section class="sheet timeSheet"><div class="sheetHead"><div><h3>勤務区分・時間</h3><p>勤務時間とオープン・クローズ区分を確認できます。</p></div><button class="x" id="closeTimeGuide">×</button></div><div class="patternLegend"><span><i class="patternDot open"></i>オープン対応</span><span><i class="patternDot close"></i>クローズ対応</span></div><div class="timeGrid" id="timeGrid"></div><button class="addPatternBtn" id="openPatternAdd">＋ シフトパターンを追加</button></section></div>
 <div class="shade" id="patternAddShade"><section class="patternAddSheet" role="dialog" aria-modal="true" aria-labelledby="patternAddTitle"><div class="patternAddHandle"></div><header class="patternAddHead"><div><h3 id="patternAddTitle">シフトパターンを追加</h3><p>勤務時間と役割を登録します。</p></div><button class="closeX" id="closePatternAdd" aria-label="閉じる">×</button></header><div class="patternAddBody"><div class="field"><label>区分名</label><input id="patternCode" maxlength="2" placeholder="例：J"></div><div class="patternTimeGrid"><div class="field"><label>開始時間</label><input type="time" id="patternStart" value="10:00"></div><div class="field"><label>終了時間</label><input type="time" id="patternEnd" value="16:00"></div></div><div class="field"><label>休憩時間</label><select id="patternBreak"><option value="0">なし</option><option value="0.5">30分</option><option value="0.75">45分</option><option value="1">1時間</option></select></div><div class="field"><label>役割</label><div class="patternRole"><label class="roleChoice"><input type="checkbox" id="patternOpen">オープン対応</label><label class="roleChoice"><input type="checkbox" id="patternClose">クローズ対応</label></div></div></div><footer class="patternAddActions"><button class="secondary" id="cancelPatternAdd">キャンセル</button><button class="primary" id="savePattern">追加する</button></footer></section></div>
+
+<div class="shade" id="businessDaysShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>営業日設定</h3><button class="closeX" id="closeBusinessDays">×</button></div><p class="confirmCopy"><span id="businessDaysMonthLabel"></span>の日付をタップして、通常 → 祝日 → 休館日を切り替えます。</p><div class="businessDayGrid" id="businessDayGrid"></div><div class="businessDayLegend"><span>通常</span><span class="holiday">祝日</span><span class="closed">休館日</span></div><p class="publishModalNote">祝日は日曜と同じ赤系表示、休館日はシフト入力不可になります。</p><div class="mactions"><button class="secondary" id="cancelBusinessDays">キャンセル</button><button class="primary" id="saveBusinessDays">保存する</button></div></div></div>
 <div class="shade" id="deadlineShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>提出期限を設定</h3><button class="closeX" id="closeDeadline">×</button></div><div class="deadlinePreview"><strong id="deadlineMonthLabel">2026年8月</strong><span>この月の希望シフト提出期限を設定します。</span></div><div class="field"><label>提出期限</label><div class="deadlineDateRow"><input type="date" id="deadlineDate"><input type="time" id="deadlineTime" value="23:59"></div></div><p class="publishModalNote">期限内はスタッフが提出後も修正できます。期限を過ぎると編集・提出を締め切ります。</p><div class="mactions"><button class="secondary" id="cancelDeadline">キャンセル</button><button class="primary" id="saveDeadline">保存する</button></div></div></div>
 <div class="shade" id="publishShiftShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3 id="publishModalTitle">シフトを公開</h3><button class="closeX" id="closePublishShift">×</button></div><div class="publishPreview"><strong id="publishMonthLabel">2026年8月のシフト</strong><span id="publishPreviewText">スタッフ画面から確認できるようになります。</span></div><div class="field"><label>スタッフへのメッセージ <span style="font-weight:500">（任意）</span></label><textarea id="publishShiftMessage" placeholder="スタッフへ伝えたい内容を入力してください（任意）
 
@@ -627,7 +639,7 @@ const adminInitialMonth=new Date();
 adminInitialMonth.setMonth(adminInitialMonth.getMonth()+1,1);
 let year=adminInitialMonth.getFullYear(), month=adminInitialMonth.getMonth();
 let people=[], notices=[], shiftPatterns=[], requestShift={}, draftShift={}, submissionMap={}, monthlySetting={};
-let selectedShift='', editId=null, reminderTargets=[], unpublishId=null, startMode='now', periodMode='today';
+let selectedShift='', editId=null, reminderTargets=[], unpublishId=null, startMode='now', periodMode='today', businessDayDraft={holidays:[],closedDays:[]};
 let shiftDirty=false, shiftSaving=false, lastShiftSavedAt=null, memberSaving=false;
 const DAY=['日','月','火','水','木','金','土'];
 
@@ -649,7 +661,34 @@ function createLocalMonthlyFallback(targetMonth){
   const parts=String(targetMonth||monthKey()).split('-').map(Number);
   const deadline=new Date(parts[0],parts[1]-1,0,23,59,59,0);
   deadline.setDate(25);
-  return {targetMonth:String(targetMonth||monthKey()),deadline:deadline.toISOString(),publicationStatus:'未公開',publicationMessage:'',publishedAt:null,isDeadlinePassed:Date.now()>deadline.getTime(),deadlineCountdownDays:Math.ceil((deadline.getTime()-Date.now())/86400000),isFallback:true};
+  return {targetMonth:String(targetMonth||monthKey()),deadline:deadline.toISOString(),publicationStatus:'未公開',publicationMessage:'',publishedAt:null,holidays:[],closedDays:[],isDeadlinePassed:Date.now()>deadline.getTime(),deadlineCountdownDays:Math.ceil((deadline.getTime()-Date.now())/86400000),isFallback:true};
+}
+
+
+function monthlyDateSet(key){return new Set((monthlySetting?.[key]||[]).map(String))}
+function isHolidayDay(day){return monthlyDateSet('holidays').has(dateKey(day))}
+function isClosedDay(day){return monthlyDateSet('closedDays').has(dateKey(day))}
+function openBusinessDays(){
+  businessDayDraft={holidays:[...(monthlySetting?.holidays||[])],closedDays:[...(monthlySetting?.closedDays||[])]};
+  $('#businessDaysMonthLabel').textContent=`${year}年${month+1}月`;
+  renderBusinessDayGrid();$('#businessDaysShade').classList.add('on');
+}
+function closeBusinessDays(){$('#businessDaysShade').classList.remove('on')}
+function renderBusinessDayGrid(){
+  const host=$('#businessDayGrid');host.innerHTML='';
+  const holidays=new Set(businessDayDraft.holidays),closed=new Set(businessDayDraft.closedDays);
+  for(let d=1;d<=daysInMonth();d++){
+    const key=dateKey(d),wd=new Date(year,month,d).getDay();
+    const btn=document.createElement('button');btn.type='button';
+    btn.className='businessDayCell '+(closed.has(key)?'closed':holidays.has(key)?'holiday':'');
+    btn.innerHTML=`<strong>${d}</strong><small>${DAY[wd]}</small>`;
+    btn.onclick=()=>{
+      if(closed.has(key)){closed.delete(key)}
+      else if(holidays.has(key)){holidays.delete(key);closed.add(key)}
+      else holidays.add(key);
+      businessDayDraft={holidays:[...holidays].sort(),closedDays:[...closed].sort()};renderBusinessDayGrid();
+    };host.appendChild(btn);
+  }
 }
 
 function resetRealDataState(){
@@ -885,7 +924,7 @@ function buildShiftTable(target,data,editable=false){
   b.innerHTML='<div class="cell h statusCol"></div><div class="cell h nameCol">スタッフ</div>';
 
   for(let d=1;d<=days;d++){
-    const w=new Date(year,month,d).getDay();
+    const w=new Date(year,month,d).getDay(),holiday=isHolidayDay(d),closed=isClosedDay(d);
     b.insertAdjacentHTML(
       'beforeend',
       `<div class="cell h ${w===0?'sun':w===6?'sat':''}">${d}<br><small>${DAY[w]}</small></div>`
@@ -911,7 +950,7 @@ function buildShiftTable(target,data,editable=false){
       const raw=data[k]||'';
       b.insertAdjacentHTML(
         'beforeend',
-        `<div class="cell ${editable?'edit':''} ${cellClass(raw,alt)}" ${editable?`data-k="${k}"`:''}>${escapeHtml(raw)}</div>`
+        `<div class="cell ${editable?'edit':''} ${isClosedDay(d)?'closedDay':''} ${cellClass(raw,alt)}" ${editable?`data-k="${k}" data-day="${d}"`:''}>${escapeHtml(raw)}</div>`
       );
     }
 
@@ -964,6 +1003,7 @@ function buildShiftTable(target,data,editable=false){
 
   if(editable){
     $$(`${target} [data-k]`).forEach(c=>c.onclick=()=>{
+      if(isClosedDay(Number(c.dataset.day)))return say('休館日はシフトを入力できません');
       draftShift[c.dataset.k]=selectedShift;
       setShiftDirty(true);
       table();
@@ -1088,7 +1128,7 @@ async function saveDeadlineSetting(){
   try{
     btn.disabled=true;btn.textContent='保存中...';
     const localValue=`${date}T${time}:00`;
-    monthlySetting=await api('apiAdminSaveMonthlySetting',token,monthKey(),localValue);
+    monthlySetting=await api('apiAdminSaveMonthlySetting',token,monthKey(),{deadline:localValue,holidays:monthlySetting?.holidays||[],closedDays:monthlySetting?.closedDays||[]});
     closeDeadlineSetting();renderDeadline();say('提出期限を保存しました');
   }catch(e){say(e.message||'提出期限を保存できませんでした')}
   finally{btn.disabled=false;btn.textContent='保存する'}
@@ -1224,14 +1264,81 @@ function closeUnpublishShift(){$('#unpublishShiftShade').classList.remove('on')}
 function openShareShift(){if(!Object.keys(draftShift).length)return say('共有できるシフトがありません');$('#shareMonthLabel').textContent=`${year}年${month+1}月 シフト表`;$('#shareShiftShade').classList.add('on')}
 function closeShareShift(){$('#shareShiftShade').classList.remove('on')}
 function createShiftShareCanvas(){
-  const days=daysInMonth(),cellW=48,nameW=118,rowH=38,headH=54,pad=24;const width=pad*2+nameW+days*cellW,height=pad*2+headH+people.length*rowH+42;
-  const scale=Math.min(2,window.devicePixelRatio||1);const canvas=document.createElement('canvas');canvas.width=width*scale;canvas.height=height*scale;const ctx=canvas.getContext('2d');ctx.scale(scale,scale);
-  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);ctx.fillStyle='#263c35';ctx.font='700 20px sans-serif';ctx.fillText(`${year}年${month+1}月 シフト表`,pad,pad+22);
-  const top=pad+headH;ctx.font='700 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeStyle='#d9e3df';ctx.lineWidth=1;ctx.fillStyle='#eef5f2';ctx.fillRect(pad,top,nameW+days*cellW,rowH);
-  ctx.fillStyle='#355d51';ctx.fillText('スタッフ',pad+nameW/2,top+rowH/2);for(let d=1;d<=days;d++){const x=pad+nameW+(d-1)*cellW;const wd=new Date(year,month,d).getDay();ctx.fillStyle=wd===0?'#c85e67':wd===6?'#5d7fae':'#355d51';ctx.fillText(`${d} ${DAY[wd]}`,x+cellW/2,top+rowH/2)}
-  people.forEach((p,i)=>{const y=top+rowH*(i+1);ctx.fillStyle=i%2?'#fafcfb':'#ffffff';ctx.fillRect(pad,y,nameW+days*cellW,rowH);ctx.fillStyle='#263c35';ctx.textAlign='left';ctx.font='700 11px sans-serif';ctx.fillText(p.name.slice(0,12),pad+8,y+rowH/2);ctx.textAlign='center';ctx.font='800 12px sans-serif';for(let d=1;d<=days;d++){const code=draftShift[`${p.id}-${d}`]||'';ctx.fillText(code,pad+nameW+(d-1)*cellW+cellW/2,y+rowH/2)}});
-  ctx.beginPath();for(let c=0;c<=days+1;c++){const x=pad+(c===0?0:c===1?nameW:nameW+(c-1)*cellW);ctx.moveTo(x,top);ctx.lineTo(x,top+rowH*(people.length+1))}for(let r=0;r<=people.length+1;r++){const y=top+r*rowH;ctx.moveTo(pad,y);ctx.lineTo(pad+nameW+days*cellW,y)}ctx.stroke();
-  ctx.fillStyle='#76857f';ctx.textAlign='left';ctx.font='10px sans-serif';ctx.fillText('ShiftMate',pad,height-18);return canvas
+  const days=daysInMonth(), members=shiftTablePeople();
+  const roleW=42,nameW=150,dayW=48,totalW=74,rowH=48,headerH=54;
+  const mainW=roleW+nameW+days*dayW+totalW;
+  const pad=28,titleH=70,summaryRows=2,guideH=190;
+  const mainH=headerH+(members.length+summaryRows)*rowH;
+  const width=pad*2+mainW,height=pad*2+titleH+mainH+guideH;
+  const scale=Math.min(2,window.devicePixelRatio||1),canvas=document.createElement('canvas');
+  canvas.width=width*scale;canvas.height=height*scale;
+  const ctx=canvas.getContext('2d');ctx.scale(scale,scale);
+  const holidays=monthlyDateSet('holidays'),closedDays=monthlyDateSet('closedDays');
+  const x0=pad,y0=pad+titleH;
+  const line='#76817d',ink='#202826',peach='#f6c998',light='#f7f8f7';
+  function rect(x,y,w,h,fill,stroke=line){ctx.fillStyle=fill;ctx.fillRect(x,y,w,h);ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.strokeRect(x,y,w,h)}
+  function text(t,x,y,size=12,weight=700,color=ink,align='center'){ctx.fillStyle=color;ctx.font=`${weight} ${size}px -apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",sans-serif`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(String(t??''),x,y)}
+  function cellColor(code){
+    if(code==='希')return ['#111','#fff'];
+    if(code==='休')return ['#e8e8e8','#252525'];
+    if(code==='有')return ['#dcefe5','#2c604e'];
+    const p=patternByCode(code),cat=String(p?.category||'');
+    if(cat==='オープン')return ['#fde3d6','#7b3e25'];
+    if(cat==='クローズ')return ['#e3edfb','#3f5f91'];
+    return ['#fff','#222'];
+  }
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
+  text(`${year} 年　${month+1} 月`,x0+10,pad+20,18,800,ink,'left');
+  text('勤務シフト表',width/2,pad+22,23,900);
+  text('ShiftMate',width-pad,pad+20,15,800,'#40a991','right');
+  const headerY=y0;
+  rect(x0,headerY,roleW,headerH,'#f0f1f0');text('役職',x0+roleW/2,headerY+headerH/2,11,800);
+  rect(x0+roleW,headerY,nameW,headerH,'#f0f1f0');text('名前',x0+roleW+nameW/2,headerY+headerH/2,12,800);
+  for(let d=1;d<=days;d++){
+    const x=x0+roleW+nameW+(d-1)*dayW,wd=new Date(year,month,d).getDay(),key=dateKey(d);
+    const closed=closedDays.has(key),holiday=holidays.has(key);
+    rect(x,headerY,dayW,headerH,closed?'#f04a4a':holiday||wd===0?'#fff0f1':wd===6?'#eef5ff':'#f0f1f0');
+    text(d,x+dayW/2,headerY+17,12,850,closed?'#fff':holiday||wd===0?'#cf5862':wd===6?'#587dab':ink);
+    text(closed?'休館':DAY[wd],x+dayW/2,headerY+37,10,800,closed?'#fff':holiday||wd===0?'#cf5862':wd===6?'#587dab':ink);
+  }
+  const totalX=x0+roleW+nameW+days*dayW;rect(totalX,headerY,totalW,headerH,'#f0f1f0');text('勤務',totalX+totalW/2,headerY+17,10,800);text('日数/時間',totalX+totalW/2,headerY+37,9,800);
+  members.forEach((p,i)=>{
+    const y=headerY+headerH+i*rowH,base=p.type==='insured'?peach:(i%2?light:'#fff');
+    rect(x0,y,roleW,rowH,base);text(p.type==='insured'?'社保':p.newcomer?'新人':'',x0+roleW/2,y+rowH/2,10,850);
+    rect(x0+roleW,y,nameW,rowH,base);text(p.name,x0+roleW+8,y+rowH/2,12,850,ink,'left');
+    let count=0,hours=0;
+    for(let d=1;d<=days;d++){
+      const x=x0+roleW+nameW+(d-1)*dayW,key=dateKey(d),closed=closedDays.has(key),code=draftShift[`${p.id}-${d}`]||'';
+      const [fill,color]=closed?['#f04a4a','#fff']:cellColor(code);
+      rect(x,y,dayW,rowH,fill);text(closed?'':code,x+dayW/2,y+rowH/2,13,900,color);
+      if(code&&!['休','希','有'].includes(code)){count++;hours+=hoursForCode(code)}
+    }
+    rect(totalX,y,totalW,rowH,base);text(`${count}日`,totalX+totalW/2,y+17,11,850);text(`${hours.toFixed(1)}h`,totalX+totalW/2,y+34,9,750,'#4d5a56');
+  });
+  ['人数差','カット'].forEach((label,ri)=>{
+    const y=headerY+headerH+(members.length+ri)*rowH;
+    rect(x0,y,roleW+nameW,rowH,ri===0?'#edf8f4':'#fff7e7');text(label,x0+(roleW+nameW)/2,y+rowH/2,11,850);
+    let sum=0;
+    for(let d=1;d<=days;d++){
+      const x=x0+roleW+nameW+(d-1)*dayW,s=dayShiftSummary(d),v=ri===0?s.balance:s.cut;sum+=ri===1?v:0;
+      rect(x,y,dayW,rowH,ri===0?'#f2fbf8':'#fff9ed');text(ri===0?summaryBalanceLabel(v):(v||'—'),x+dayW/2,y+rowH/2,11,850,ri===0?'#27886f':'#9a6a14');
+    }
+    rect(totalX,y,totalW,rowH,ri===0?'#edf8f4':'#fff7e7');text(ri===0?'希望比':`${sum}名`,totalX+totalW/2,y+rowH/2,10,850);
+  });
+  const guideY=headerY+mainH+18;
+  const sectionW=(mainW-24)/3;
+  function guideBox(x,title,rows){
+    rect(x,guideY,sectionW,guideH-28,'#fff');
+    rect(x,guideY,sectionW,30,'#eef5f2');text(title,x+sectionW/2,guideY+15,11,850);
+    rows.forEach((r,i)=>{const yy=guideY+30+i*24;if(yy+24>guideY+guideH-28)return;rect(x,yy,sectionW,24,i%2?'#fafbfa':'#fff');text(r[0],x+22,yy+12,10,850,ink,'left');text(r[1],x+sectionW-10,yy+12,9,700,'#555','right')})
+  }
+  const patterns=shiftPatterns.map(p=>[p.code,`${p.startTime||''}〜${p.endTime||''}  ${p.workingTime||''}`]);
+  guideBox(x0,'勤務区分 A〜F',patterns.filter(r=>'ABCDEF'.includes(r[0])));
+  guideBox(x0+sectionW+12,'勤務区分 G〜I',patterns.filter(r=>'GHI'.includes(r[0])));
+  const special=[['希','希望休'],['休','休み'],['有','有給'],['祝日',(monthlySetting?.holidays||[]).map(v=>Number(v.slice(-2))).join('・')||'なし'],['休館日',(monthlySetting?.closedDays||[]).map(v=>Number(v.slice(-2))).join('・')||'なし']];
+  guideBox(x0+(sectionW+12)*2,'休み・営業日設定',special);
+  text('ShiftMate',x0,height-pad/2,10,700,'#71817b','left');
+  return canvas;
 }
 async function shareShiftImage(){
   const btn=$('#confirmShareShift');if(btn.disabled)return;try{btn.disabled=true;btn.classList.add('shareBusy');btn.textContent='画像を作成中...';const canvas=createShiftShareCanvas();const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('画像を作成できませんでした')),'image/png'));const file=new File([blob],`ShiftMate_${monthKey()}_shift.png`,{type:'image/png'});
@@ -1273,6 +1380,21 @@ $('#publishNotice').onclick=async()=>{try{const text=$('#noticeText').value.trim
 $('#cancelUnpublish').onclick=$('#cancelUnpublish2').onclick=closeUnpublish;
 $('#confirmUnpublish').onclick=async()=>{try{await api('apiAdminSetNoticePublic',token,unpublishId,false);closeUnpublish();await loadMonth(false);say('共有事項を非公開にしました')}catch(e){say(e.message)}};
 $('#generateDraft').onclick=()=>{$('#generateDraftShade').classList.add('on')};$('#cancelGenerateDraft').onclick=$('#closeGenerateDraft').onclick=()=>$('#generateDraftShade').classList.remove('on');$('#confirmGenerateDraft').onclick=()=>{$('#generateDraftShade').classList.remove('on');generateFromRequests()};
+
+$('#openBusinessDays').onclick=openBusinessDays;
+$('#closeBusinessDays').onclick=$('#cancelBusinessDays').onclick=closeBusinessDays;
+$('#saveBusinessDays').onclick=async()=>{
+  try{
+    monthlySetting=await api('apiAdminSaveMonthlySetting',token,monthKey(),{
+      deadline:monthlySetting?.deadline||null,
+      holidays:businessDayDraft.holidays,
+      closedDays:businessDayDraft.closedDays
+    });
+    closeBusinessDays();table();requestTable();say('営業日設定を保存しました');
+    window.ShiftMateCache?.clear?.();
+  }catch(e){say(e.message||'営業日設定を保存できませんでした')}
+};
+
 $('#openDeadlineSetting').onclick=openDeadlineSetting;
 $('#closeDeadline').onclick=$('#cancelDeadline').onclick=closeDeadlineSetting;
 $('#saveDeadline').onclick=saveDeadlineSetting;
