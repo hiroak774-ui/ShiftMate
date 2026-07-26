@@ -574,14 +574,14 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <div class="seg"><button class="on" data-view="request">希望シフト</button><button data-view="draft">シフト表</button></div>
 <div class="card deadlineCard" id="deadlineCard">
   <div class="deadlineCopy">
-    <small>希望シフト提出期限</small>
+    <small>提出期限・祝日・休館日</small>
     <strong id="deadlineLabel">読み込み中...</strong>
     <span id="deadlineSub">対象月ごとに設定できます</span>
   </div>
-  <button class="deadlineBtn" id="openDeadlineSetting">設定・変更</button>
+  <button class="deadlineBtn" id="openDeadlineSetting">月間設定</button>
 </div>
 <div id="requestView">
-  <div class="toolbar shiftToolbar"><div class="month"><button class="round prev">‹</button><strong class="monthText">2026年8月</strong><span class="monthLoadIndicator"><i class="monthLoadSpinner"></i>更新中</span><button class="round next">›</button></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="businessDayBtn" id="openBusinessDays">営業日設定</button><button class="timeGuideBtn openTimeGuide">勤務区分・時間</button></div></div>
+  <div class="toolbar shiftToolbar"><div class="month"><button class="round prev">‹</button><strong class="monthText">2026年8月</strong><span class="monthLoadIndicator"><i class="monthLoadSpinner"></i>更新中</span><button class="round next">›</button></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="timeGuideBtn openTimeGuide">勤務区分・時間</button></div></div>
   
   <div class="card tableCard"><div class="scroll shiftScroll"><div class="table shiftTable" id="requestTable"></div></div><div class="legend"><span><em class="sample hope">希</em>希望休</span><span><em class="sample off">休</em>休み</span><span>横にスクロールして月全体を確認できます</span></div></div>
   <div class="card generateCard"><div class="generateCopy"><strong>希望内容をもとにシフト表を作成</strong><span id="generateHint">提出された希望内容をもとに作成します。</span></div><button class="primary generateBtn" id="generateDraft"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"></path><circle cx="12" cy="12" r="3"></circle></svg>仮シフトを作成</button></div>
@@ -617,7 +617,14 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 <div class="shade" id="timeGuideShade"><section class="sheet timeSheet"><div class="sheetHead"><div><h3>勤務区分・時間</h3><p>勤務時間とオープン・クローズ区分を確認できます。</p></div><button class="x" id="closeTimeGuide">×</button></div><div class="patternLegend"><span><i class="patternDot open"></i>オープン対応</span><span><i class="patternDot close"></i>クローズ対応</span></div><div class="timeGrid" id="timeGrid"></div><button class="addPatternBtn" id="openPatternAdd">＋ シフトパターンを追加</button></section></div>
 <div class="shade" id="patternAddShade"><section class="patternAddSheet" role="dialog" aria-modal="true" aria-labelledby="patternAddTitle"><div class="patternAddHandle"></div><header class="patternAddHead"><div><h3 id="patternAddTitle">シフトパターンを追加</h3><p>勤務時間と役割を登録します。</p></div><button class="closeX" id="closePatternAdd" aria-label="閉じる">×</button></header><div class="patternAddBody"><div class="field"><label>区分名</label><input id="patternCode" maxlength="2" placeholder="例：J"></div><div class="patternTimeGrid"><div class="field"><label>開始時間</label><input type="time" id="patternStart" value="10:00"></div><div class="field"><label>終了時間</label><input type="time" id="patternEnd" value="16:00"></div></div><div class="field"><label>休憩時間</label><select id="patternBreak"><option value="0">なし</option><option value="0.5">30分</option><option value="0.75">45分</option><option value="1">1時間</option></select></div><div class="field"><label>役割</label><div class="patternRole"><label class="roleChoice"><input type="checkbox" id="patternOpen">オープン対応</label><label class="roleChoice"><input type="checkbox" id="patternClose">クローズ対応</label></div></div></div><footer class="patternAddActions"><button class="secondary" id="cancelPatternAdd">キャンセル</button><button class="primary" id="savePattern">追加する</button></footer></section></div>
 
-<div class="shade" id="businessDaysShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>営業日設定</h3><button class="closeX" id="closeBusinessDays">×</button></div><p class="confirmCopy"><span id="businessDaysMonthLabel"></span>の日付をタップして、通常 → 祝日 → 休館日を切り替えます。</p><div class="businessDayGrid" id="businessDayGrid"></div><div class="businessDayLegend"><span>通常</span><span class="holiday">祝日</span><span class="closed">休館日</span></div><p class="publishModalNote">祝日は日曜と同じ赤系表示、休館日はシフト入力不可になります。</p><div class="mactions"><button class="secondary" id="cancelBusinessDays">キャンセル</button><button class="primary" id="saveBusinessDays">保存する</button></div></div></div>
+<div class="shade" id="businessDaysShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>月間設定</h3><button class="closeX" id="closeBusinessDays">×</button></div>
+<div class="deadlinePreview"><strong id="businessDaysMonthLabel"></strong><span>提出期限と営業日情報をまとめて設定します。</span></div>
+<div class="field"><label>希望シフト提出期限</label><div class="deadlineDateRow"><input type="date" id="monthlyDeadlineDate"><input type="time" id="monthlyDeadlineTime" value="23:59"></div></div>
+<p class="confirmCopy" style="margin-top:16px">日付をタップして、通常 → 祝日 → 休館日を切り替えます。</p>
+<div class="businessDayGrid" id="businessDayGrid"></div>
+<div class="businessDayLegend"><span>通常</span><span class="holiday">祝日</span><span class="closed">休館日</span></div>
+<p class="publishModalNote">祝日は日曜と同じ赤系表示、休館日はシフト入力不可になります。提出期限を過ぎるとスタッフの編集・提出を締め切ります。</p>
+<div class="mactions"><button class="secondary" id="cancelBusinessDays">キャンセル</button><button class="primary" id="saveBusinessDays">保存する</button></div></div></div>
 <div class="shade" id="deadlineShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3>提出期限を設定</h3><button class="closeX" id="closeDeadline">×</button></div><div class="deadlinePreview"><strong id="deadlineMonthLabel">2026年8月</strong><span>この月の希望シフト提出期限を設定します。</span></div><div class="field"><label>提出期限</label><div class="deadlineDateRow"><input type="date" id="deadlineDate"><input type="time" id="deadlineTime" value="23:59"></div></div><p class="publishModalNote">期限内はスタッフが提出後も修正できます。期限を過ぎると編集・提出を締め切ります。</p><div class="mactions"><button class="secondary" id="cancelDeadline">キャンセル</button><button class="primary" id="saveDeadline">保存する</button></div></div></div>
 <div class="shade" id="publishShiftShade"><div class="modal"><div class="handle"></div><div class="modalHead"><h3 id="publishModalTitle">シフトを公開</h3><button class="closeX" id="closePublishShift">×</button></div><div class="publishPreview"><strong id="publishMonthLabel">2026年8月のシフト</strong><span id="publishPreviewText">スタッフ画面から確認できるようになります。</span></div><div class="field"><label>スタッフへのメッセージ <span style="font-weight:500">（任意）</span></label><textarea id="publishShiftMessage" placeholder="スタッフへ伝えたい内容を入力してください（任意）
 
@@ -671,6 +678,9 @@ function isClosedDay(day){return monthlyDateSet('closedDays').has(dateKey(day))}
 function openBusinessDays(){
   businessDayDraft={holidays:[...(monthlySetting?.holidays||[])],closedDays:[...(monthlySetting?.closedDays||[])]};
   $('#businessDaysMonthLabel').textContent=`${year}年${month+1}月`;
+  const deadline=monthlySetting?.deadline?new Date(monthlySetting.deadline):null;
+  $('#monthlyDeadlineDate').value=deadline&&!Number.isNaN(deadline.getTime())?`${deadline.getFullYear()}-${String(deadline.getMonth()+1).padStart(2,'0')}-${String(deadline.getDate()).padStart(2,'0')}`:'';
+  $('#monthlyDeadlineTime').value=deadline&&!Number.isNaN(deadline.getTime())?`${String(deadline.getHours()).padStart(2,'0')}:${String(deadline.getMinutes()).padStart(2,'0')}`:'23:59';
   renderBusinessDayGrid();$('#businessDaysShade').classList.add('on');
 }
 function closeBusinessDays(){$('#businessDaysShade').classList.remove('on')}
@@ -1104,8 +1114,8 @@ function renderDeadline(){
   const label=$('#deadlineLabel'),sub=$('#deadlineSub');
   if(!label)return;
   label.textContent=formatDeadlineLabel(monthlySetting?.deadline);
-  if(!monthlySetting?.deadline)sub.textContent='提出期限が設定されていません';
-  else if(monthlySetting.isDeadlinePassed)sub.textContent='提出期限を過ぎています';
+  if(!monthlySetting?.deadline)sub.textContent='月間設定が未設定です';
+  else if(monthlySetting.isDeadlinePassed)sub.textContent='提出期限を過ぎています・営業日設定を確認できます';
   else if(monthlySetting.deadlineCountdownDays!=null&&monthlySetting.deadlineCountdownDays<=7)sub.textContent=`締切まであと${Math.max(0,monthlySetting.deadlineCountdownDays)}日`;
   else sub.textContent='期限内は提出後も修正できます';
 }
@@ -1381,21 +1391,23 @@ $('#cancelUnpublish').onclick=$('#cancelUnpublish2').onclick=closeUnpublish;
 $('#confirmUnpublish').onclick=async()=>{try{await api('apiAdminSetNoticePublic',token,unpublishId,false);closeUnpublish();await loadMonth(false);say('共有事項を非公開にしました')}catch(e){say(e.message)}};
 $('#generateDraft').onclick=()=>{$('#generateDraftShade').classList.add('on')};$('#cancelGenerateDraft').onclick=$('#closeGenerateDraft').onclick=()=>$('#generateDraftShade').classList.remove('on');$('#confirmGenerateDraft').onclick=()=>{$('#generateDraftShade').classList.remove('on');generateFromRequests()};
 
-$('#openBusinessDays').onclick=openBusinessDays;
 $('#closeBusinessDays').onclick=$('#cancelBusinessDays').onclick=closeBusinessDays;
 $('#saveBusinessDays').onclick=async()=>{
+  const date=$('#monthlyDeadlineDate').value,time=$('#monthlyDeadlineTime').value||'23:59';
+  if(!date)return say('提出期限の日付を入力してください');
   try{
+    const deadline=new Date(`${date}T${time}:00`);
     monthlySetting=await api('apiAdminSaveMonthlySetting',token,monthKey(),{
-      deadline:monthlySetting?.deadline||null,
+      deadline:deadline.toISOString(),
       holidays:businessDayDraft.holidays,
       closedDays:businessDayDraft.closedDays
     });
-    closeBusinessDays();table();requestTable();say('営業日設定を保存しました');
+    closeBusinessDays();renderDeadline();table();requestTable();say('月間設定を保存しました');
     window.ShiftMateCache?.clear?.();
-  }catch(e){say(e.message||'営業日設定を保存できませんでした')}
+  }catch(e){say(e.message||'月間設定を保存できませんでした')}
 };
 
-$('#openDeadlineSetting').onclick=openDeadlineSetting;
+$('#openDeadlineSetting').onclick=openBusinessDays;
 $('#closeDeadline').onclick=$('#cancelDeadline').onclick=closeDeadlineSetting;
 $('#saveDeadline').onclick=saveDeadlineSetting;
 $('#saveConfirmedDraft').onclick=()=>saveConfirmedDraft(true);
