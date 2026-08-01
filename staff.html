@@ -385,8 +385,10 @@ const STORAGE_KEY="shiftmate_session_token";
 const LAST_PAGE_KEY="shiftmate_last_page";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const token=localStorage.getItem(STORAGE_KEY)||"";
-let user=null, patterns=[], monthlySetting=null, notices=[], members=[];
-let viewDate=new Date(), confirmedDate=new Date(), values={}, requestedStatus="", confirmedRows=[];
+let user=null, patterns=[], requestMonthlySetting=null, notices=[], members=[];
+let viewDate=new Date(), confirmedDate=new Date(), values={}, requestedStatus="";
+const confirmedRowsByMonth=new Map();
+const confirmedSettingsByMonth=new Map();
 let bulkMode=false, bulkPattern=null, singleKey=null, selectedWeekdays=[];
 let dragActive=false, dragVisited=new Set(), dragChanged=0, suppressBulkClick=false;
 let confirmedView="personal", loadingCount=0, initialLoadFinished=false;
@@ -440,7 +442,7 @@ function valuesToEntries(){
  const mk=monthKey(viewDate);
  return Object.entries(values).filter(([date,code])=>date.startsWith(mk+"-")&&code).map(([date,code])=>({date,code,memo:""}))
 }
-function isLocked(){return !!monthlySetting?.isDeadlinePassed}
+function isLocked(){return !!requestMonthlySetting?.isDeadlinePassed}
 function updateTodayLabel(){const now=new Date();$("#homeDateLabel").textContent=now.toLocaleDateString("ja-JP",{month:"numeric",day:"numeric",weekday:"short"})}
 
 function setCommonStaffData(data){
@@ -454,17 +456,23 @@ function setCommonStaffData(data){
 }
 function applyRequestSnapshot(data){
   setCommonStaffData(data);
-  monthlySetting=data.monthlySetting||null;
+  requestMonthlySetting=data.monthlySetting||null;
   values=entriesToValues(data.requestedShifts||[]);
   requestedStatus=(data.requestedShifts||[])[0]?.status||"";
   renderIdentity();renderCalendar();renderPatternPicker();
 }
-function applyConfirmedSnapshot(data){
+function applyConfirmedSnapshot(data,targetMonth){
   setCommonStaffData(data);
-  confirmedRows=data.allConfirmedShifts?.length?data.allConfirmedShifts:(data.confirmedShifts||[]);
+  const month=targetMonth||monthKey(confirmedDate);
+  const rows=data.allConfirmedShifts?.length?data.allConfirmedShifts:(data.confirmedShifts||[]);
+  confirmedRowsByMonth.set(month,rows);
+  confirmedSettingsByMonth.set(month,data.monthlySetting||null);
   const personalConfirmedShifts=(data.confirmedShifts||[]).filter(r=>r.staffId===user?.staffId);
-  const homeData={...data,personalConfirmedShifts,allConfirmedShifts:confirmedRows};
-  renderIdentity();renderConfirmed();renderHome(homeData);
+  const homeData={...data,personalConfirmedShifts,allConfirmedShifts:rows};
+  renderIdentity();
+  if(month===monthKey(confirmedDate))renderConfirmed();
+  const nowMonth=monthKey(new Date());
+  if(month===nowMonth)renderHome(homeData);
 }
 async function fetchAndCacheSnapshot(targetMonth){const snapshot=await api("apiGetInitialSnapshot",token,targetMonth);window.ShiftMateCache?.set?.(targetMonth,snapshot);return snapshot}
 async function loadMonth(date, quiet=false, force=false){
@@ -505,7 +513,7 @@ async function loadConfirmedMonth(date, quiet=false, force=false){
   $("#appLoading")?.classList.add("hidden");
   if(!quiet)hideLoading();
   fetchAndCacheSnapshot(targetMonth).then(snapshot=>{
-   if(snapshot?.staff)applyConfirmedSnapshot(snapshot.staff);
+   if(snapshot?.staff)applyConfirmedSnapshot(snapshot.staff,targetMonth);
   }).catch(error=>console.warn("[ShiftMate Staff] confirmed background refresh failed",error));
   return;
  }
@@ -513,7 +521,7 @@ async function loadConfirmedMonth(date, quiet=false, force=false){
  try{
   const snapshot=await Promise.race([fetchAndCacheSnapshot(targetMonth),new Promise((_,reject)=>setTimeout(()=>reject(new Error("確定シフトの読み込みに時間がかかっています。再読み込みしてください。")),20000))]);
   if(!snapshot?.staff)throw new Error("確定シフトを取得できませんでした");
-  applyConfirmedSnapshot(snapshot.staff);
+  applyConfirmedSnapshot(snapshot.staff,targetMonth);
  }catch(e){
   console.error("[ShiftMate Staff] loadConfirmedMonth failed",e);toast(e.message);
  }finally{
@@ -591,11 +599,11 @@ function updateProgress(){
  $("#progressText").textContent=pct+"%入力済み";$("#remainingText").textContent=`あと${days-count}日`
 }
 function updateDeadline(){
- const badge=$("#deadlineBadge"),note=$("#deadlineNote"),raw=monthlySetting?.deadline;badge.className="deadline";note.textContent="";
+ const badge=$("#deadlineBadge"),note=$("#deadlineNote"),raw=requestMonthlySetting?.deadline;badge.className="deadline";note.textContent="";
  if(!raw){badge.textContent="提出期限：未設定";return}
  const d=new Date(raw),diff=Math.ceil((d-new Date())/86400000);
  const label=`${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
- if(monthlySetting.isDeadlinePassed){badge.textContent="提出期限を過ぎています";badge.classList.add("urgent");note.textContent=label}
+ if(requestMonthlySetting.isDeadlinePassed){badge.textContent="提出期限を過ぎています";badge.classList.add("urgent");note.textContent=label}
  else if(diff<=7){badge.textContent=diff<=0?"本日締切":`あと${diff}日`;badge.classList.add(diff<=3?"urgent":"countdown");note.textContent=`提出期限 ${label}`}
  else badge.textContent=`提出期限：${label}`
 }
@@ -630,25 +638,28 @@ function scrollConfirmedToToday(){
 }
 function renderConfirmed(){
  const y=confirmedDate.getFullYear(),m=confirmedDate.getMonth(),days=new Date(y,m+1,0).getDate();$("#confirmedMonthTitle").textContent=`${y}年${m+1}月`;
- const mk=monthKey(confirmedDate),rows=confirmedRows.filter(r=>r.targetMonth===mk||r.date.startsWith(mk+"-"));
- if(!["公開中","公開済み","公開"].includes(monthlySetting?.publicationStatus)){$("#confirmedTable").innerHTML='<div class="empty-state">この月の確定シフトはまだ公開されていません。</div>';return}
+ const mk=monthKey(confirmedDate);
+ const confirmedRows=confirmedRowsByMonth.get(mk)||[];
+ const confirmedMonthlySetting=confirmedSettingsByMonth.get(mk)||null;
+ const rows=confirmedRows.filter(r=>r.targetMonth===mk||r.date.startsWith(mk+"-"));
+ if(!["公開中","公開済み","公開"].includes(confirmedMonthlySetting?.publicationStatus)){$("#confirmedTable").innerHTML='<div class="empty-state">この月の確定シフトはまだ公開されていません。</div>';return}
  const now=new Date(),todayInMonth=now.getFullYear()===y&&now.getMonth()===m?now.getDate():0;
  const peopleSource=confirmedView==="personal"?[user]:(members.length?members:[user]);
  const people=peopleSource.map(person=>({person,values:Object.fromEntries(rows.filter(r=>r.staffId===person.staffId).map(r=>[Number(r.date.slice(-2)),r.code]))}));
  const host=$("#confirmedTable");host.innerHTML="";const table=document.createElement("table");table.className="confirmed-native-table";
  let head='<thead><tr><th class="status-col" rowspan="2">区分</th><th class="name-col" rowspan="2">スタッフ名</th>';
  for(let d=1;d<=days;d++){
-  const wd=new Date(y,m,d).getDay(),key=`${mk}-${String(d).padStart(2,"0")}`,holiday=(monthlySetting?.holidays||[]).includes(key),closed=(monthlySetting?.closedDays||[]).includes(key),today=d===todayInMonth;
+  const wd=new Date(y,m,d).getDay(),key=`${mk}-${String(d).padStart(2,"0")}`,holiday=(confirmedMonthlySetting?.holidays||[]).includes(key),closed=(confirmedMonthlySetting?.closedDays||[]).includes(key),today=d===todayInMonth;
   head+=`<th class="${closed?'closed':holiday||wd===0?'holiday sun':wd===6?'sat':''}${today?' today-col today-top':''}">${d}</th>`;
  }
  head+='<th class="total-col" rowspan="2">勤務</th></tr><tr>';
  for(let d=1;d<=days;d++){
-  const wd=new Date(y,m,d).getDay(),key=`${mk}-${String(d).padStart(2,"0")}`,holiday=(monthlySetting?.holidays||[]).includes(key),closed=(monthlySetting?.closedDays||[]).includes(key),today=d===todayInMonth;
+  const wd=new Date(y,m,d).getDay(),key=`${mk}-${String(d).padStart(2,"0")}`,holiday=(confirmedMonthlySetting?.holidays||[]).includes(key),closed=(confirmedMonthlySetting?.closedDays||[]).includes(key),today=d===todayInMonth;
   head+=`<th class="${closed?'closed':holiday||wd===0?'holiday sun':wd===6?'sat':''}${today?' today-col':''}">${closed?'休館':["日","月","火","水","木","金","土"][wd]}</th>`;
  }
  head+='</tr></thead>';
  let body="<tbody>";people.forEach(({person,values:map},personIndex)=>{body+=`<tr><td class="status-col">${person.socialInsurance?'<span class="confirmed-status-mark insured">社</span>':person.isNew?'<span class="confirmed-status-mark newcomer">新</span>':""}</td><td class="name-col"><strong>${esc(person.name)}</strong></td>`;let count=0;
-  for(let d=1;d<=days;d++){const key=`${mk}-${String(d).padStart(2,"0")}`,closed=(monthlySetting?.closedDays||[]).includes(key),c=map[d]||"",today=d===todayInMonth,last=personIndex===people.length-1;if(c&&!['休','希','有'].includes(c)&&!closed)count++;body+=`<td class="${closed?'closed':confirmedClass(c)}${today?' today-col':''}${today&&last?' today-bottom':''}">${closed?'休館':esc(c)}</td>`}body+=`<td class="total-col">${count}日</td></tr>`});
+  for(let d=1;d<=days;d++){const key=`${mk}-${String(d).padStart(2,"0")}`,closed=(confirmedMonthlySetting?.closedDays||[]).includes(key),c=map[d]||"",today=d===todayInMonth,last=personIndex===people.length-1;if(c&&!['休','希','有'].includes(c)&&!closed)count++;body+=`<td class="${closed?'closed':confirmedClass(c)}${today?' today-col':''}${today&&last?' today-bottom':''}">${closed?'休館':esc(c)}</td>`}body+=`<td class="total-col">${count}日</td></tr>`});
  body+="</tbody>";table.innerHTML=head+body;host.appendChild(table);scrollConfirmedToToday();
 }
 async function changeMonth(target,kind){
@@ -670,7 +681,19 @@ $("#submitBtn").onclick=()=>saveRequests(true);
 $("#confirmedPrev").onclick=()=>changeMonth(new Date(confirmedDate.getFullYear(),confirmedDate.getMonth()-1,1),"confirmed");
 $("#confirmedNext").onclick=()=>changeMonth(new Date(confirmedDate.getFullYear(),confirmedDate.getMonth()+1,1),"confirmed");
 $$("#confirmedSegment button").forEach(b=>b.onclick=()=>{$$("#confirmedSegment button").forEach(x=>x.classList.remove("active"));b.classList.add("active");confirmedView=b.dataset.view;renderConfirmed()});
-$$(".nav").forEach(n=>n.onclick=()=>{$$(".nav").forEach(x=>x.classList.remove("active"));n.classList.add("active");$$(".page").forEach(x=>x.classList.remove("active"));$("#"+n.dataset.page).classList.add("active");$("#pageTitle").textContent=n.dataset.title;$("#pageSub").textContent=n.dataset.sub;$("#submitbar").classList.toggle("hidden",n.dataset.page!=="requestPage");if(n.dataset.page!=="requestPage")stopBulk();if(n.dataset.page==="confirmedPage")setTimeout(scrollConfirmedToToday,60)});
+$$(".nav").forEach(n=>n.onclick=async()=>{
+ $$(".nav").forEach(x=>x.classList.remove("active"));n.classList.add("active");
+ $$(".page").forEach(x=>x.classList.remove("active"));$("#"+n.dataset.page).classList.add("active");
+ $("#pageTitle").textContent=n.dataset.title;$("#pageSub").textContent=n.dataset.sub;
+ $("#submitbar").classList.toggle("hidden",n.dataset.page!=="requestPage");
+ if(n.dataset.page!=="requestPage")stopBulk();
+ if(n.dataset.page==="confirmedPage"){
+  const mk=monthKey(confirmedDate);
+  if(!confirmedRowsByMonth.has(mk)||!confirmedSettingsByMonth.has(mk))await loadConfirmedMonth(confirmedDate,true);
+  else renderConfirmed();
+  setTimeout(scrollConfirmedToToday,60);
+ }
+});
 $("#menuBtn").onclick=()=>$("#drawerBg").classList.add("show");$("#drawerClose").onclick=()=>$("#drawerBg").classList.remove("show");$("#drawerBg").onclick=e=>{if(e.target===$("#drawerBg"))$("#drawerBg").classList.remove("show")};
 $("#drawerNotice").onclick=()=>{$(".nav[data-page='homePage']").click();$("#drawerBg").classList.remove("show")};
 
