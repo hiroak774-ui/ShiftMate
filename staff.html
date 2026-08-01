@@ -389,6 +389,7 @@ let user=null, patterns=[], requestMonthlySetting=null, notices=[], members=[];
 let viewDate=new Date(), confirmedDate=new Date(), values={}, requestedStatus="";
 const confirmedRowsByMonth=new Map();
 const confirmedSettingsByMonth=new Map();
+const confirmedMembersByMonth=new Map();
 let bulkMode=false, bulkPattern=null, singleKey=null, selectedWeekdays=[];
 let dragActive=false, dragVisited=new Set(), dragChanged=0, suppressBulkClick=false;
 let confirmedView="personal", loadingCount=0, initialLoadFinished=false;
@@ -452,7 +453,7 @@ function setCommonStaffData(data){
     patterns.push({code:"○",time:"終日勤務可能",role:"時間指定なし",roleClass:"none"},{code:"休",time:"希望休",role:"お休み",roleClass:"none"},{code:"有",time:"有給休暇",role:"お休み",roleClass:"none"});
   }
   if(data.notices)notices=data.notices;
-  if(data.members)members=data.members;
+  if(Array.isArray(data.members)&&data.members.length)members=data.members;
 }
 function applyRequestSnapshot(data){
   setCommonStaffData(data);
@@ -467,7 +468,11 @@ function applyConfirmedSnapshot(data,targetMonth){
   const rows=data.allConfirmedShifts?.length?data.allConfirmedShifts:(data.confirmedShifts||[]);
   confirmedRowsByMonth.set(month,rows);
   confirmedSettingsByMonth.set(month,data.monthlySetting||null);
-  const personalConfirmedShifts=(data.confirmedShifts||[]).filter(r=>r.staffId===user?.staffId);
+  if(Array.isArray(data.members)&&data.members.length){
+    confirmedMembersByMonth.set(month,data.members);
+    members=data.members;
+  }
+  const personalConfirmedShifts=(data.confirmedShifts||data.personalConfirmedShifts||[]).filter(r=>r.staffId===user?.staffId);
   const homeData={...data,personalConfirmedShifts,allConfirmedShifts:rows};
   renderIdentity();
   if(month===monthKey(confirmedDate))renderConfirmed();
@@ -644,8 +649,12 @@ function renderConfirmed(){
  const rows=confirmedRows.filter(r=>r.targetMonth===mk||r.date.startsWith(mk+"-"));
  if(!["公開中","公開済み","公開"].includes(confirmedMonthlySetting?.publicationStatus)){$("#confirmedTable").innerHTML='<div class="empty-state">この月の確定シフトはまだ公開されていません。</div>';return}
  const now=new Date(),todayInMonth=now.getFullYear()===y&&now.getMonth()===m?now.getDate():0;
- const peopleSource=confirmedView==="personal"?[user]:(members.length?members:[user]);
- const people=peopleSource.map(person=>({person,values:Object.fromEntries(rows.filter(r=>r.staffId===person.staffId).map(r=>[Number(r.date.slice(-2)),r.code]))}));
+ const monthMembers=confirmedMembersByMonth.get(mk)||members||[];
+ const rowStaffIds=[...new Set(rows.map(r=>r.staffId).filter(Boolean))];
+ const fallbackPeople=rowStaffIds.map(staffId=>monthMembers.find(person=>person.staffId===staffId)||members.find(person=>person.staffId===staffId)||{staffId,name:staffId});
+ const allPeople=monthMembers.length?monthMembers:(fallbackPeople.length?fallbackPeople:[user]);
+ const peopleSource=confirmedView==="personal"?[user]:allPeople;
+ const people=peopleSource.filter(Boolean).map(person=>({person,values:Object.fromEntries(rows.filter(r=>r.staffId===person.staffId).map(r=>[Number(r.date.slice(-2)),r.code]))}));
  const host=$("#confirmedTable");host.innerHTML="";const table=document.createElement("table");table.className="confirmed-native-table";
  let head='<thead><tr><th class="status-col" rowspan="2">区分</th><th class="name-col" rowspan="2">スタッフ名</th>';
  for(let d=1;d<=days;d++){
@@ -680,7 +689,16 @@ $("#clearBtn").onclick=()=>{if(isLocked())return;if(confirm("表示中の月の�
 $("#submitBtn").onclick=()=>saveRequests(true);
 $("#confirmedPrev").onclick=()=>changeMonth(new Date(confirmedDate.getFullYear(),confirmedDate.getMonth()-1,1),"confirmed");
 $("#confirmedNext").onclick=()=>changeMonth(new Date(confirmedDate.getFullYear(),confirmedDate.getMonth()+1,1),"confirmed");
-$$("#confirmedSegment button").forEach(b=>b.onclick=()=>{$$("#confirmedSegment button").forEach(x=>x.classList.remove("active"));b.classList.add("active");confirmedView=b.dataset.view;renderConfirmed()});
+$$("#confirmedSegment button").forEach(b=>b.onclick=async()=>{
+ $$("#confirmedSegment button").forEach(x=>x.classList.toggle("active",x===b));
+ confirmedView=b.dataset.view;
+ const mk=monthKey(confirmedDate);
+ if(confirmedView==="all"&&!confirmedMembersByMonth.get(mk)?.length){
+  await loadConfirmedMonth(confirmedDate,true,true);
+ }
+ renderConfirmed();
+ setTimeout(scrollConfirmedToToday,60);
+});
 $$(".nav").forEach(n=>n.onclick=async()=>{
  $$(".nav").forEach(x=>x.classList.remove("active"));n.classList.add("active");
  $$(".page").forEach(x=>x.classList.remove("active"));$("#"+n.dataset.page).classList.add("active");
