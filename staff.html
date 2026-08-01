@@ -443,13 +443,28 @@ function valuesToEntries(){
 function isLocked(){return !!monthlySetting?.isDeadlinePassed}
 function updateTodayLabel(){const now=new Date();$("#homeDateLabel").textContent=now.toLocaleDateString("ja-JP",{month:"numeric",day:"numeric",weekday:"short"})}
 
-function applyStaffSnapshot(data){
-  user=data.user;patterns=(data.patterns||[]).map(p=>({...p,time:formatTime(p),role:p.category||"区分なし",roleClass:patternRoleClass(p.category)}));
-  patterns.push({code:"○",time:"終日勤務可能",role:"時間指定なし",roleClass:"none"},{code:"休",time:"希望休",role:"お休み",roleClass:"none"},{code:"有",time:"有給休暇",role:"お休み",roleClass:"none"});
-  monthlySetting=data.monthlySetting||null;notices=data.notices||[];members=data.members||[];values=entriesToValues(data.requestedShifts||[]);
-  requestedStatus=(data.requestedShifts||[])[0]?.status||"";confirmedRows=data.allConfirmedShifts?.length?data.allConfirmedShifts:(data.confirmedShifts||[]);
-  const personalConfirmedShifts=(data.confirmedShifts||[]).filter(r=>r.staffId===user.staffId);const homeData={...data,personalConfirmedShifts,allConfirmedShifts:confirmedRows};
-  renderIdentity();renderCalendar();renderPatternPicker();renderConfirmed();renderHome(homeData);
+function setCommonStaffData(data){
+  user=data.user||user;
+  if(data.patterns){
+    patterns=(data.patterns||[]).map(p=>({...p,time:formatTime(p),role:p.category||"区分なし",roleClass:patternRoleClass(p.category)}));
+    patterns.push({code:"○",time:"終日勤務可能",role:"時間指定なし",roleClass:"none"},{code:"休",time:"希望休",role:"お休み",roleClass:"none"},{code:"有",time:"有給休暇",role:"お休み",roleClass:"none"});
+  }
+  if(data.notices)notices=data.notices;
+  if(data.members)members=data.members;
+}
+function applyRequestSnapshot(data){
+  setCommonStaffData(data);
+  monthlySetting=data.monthlySetting||null;
+  values=entriesToValues(data.requestedShifts||[]);
+  requestedStatus=(data.requestedShifts||[])[0]?.status||"";
+  renderIdentity();renderCalendar();renderPatternPicker();
+}
+function applyConfirmedSnapshot(data){
+  setCommonStaffData(data);
+  confirmedRows=data.allConfirmedShifts?.length?data.allConfirmedShifts:(data.confirmedShifts||[]);
+  const personalConfirmedShifts=(data.confirmedShifts||[]).filter(r=>r.staffId===user?.staffId);
+  const homeData={...data,personalConfirmedShifts,allConfirmedShifts:confirmedRows};
+  renderIdentity();renderConfirmed();renderHome(homeData);
 }
 async function fetchAndCacheSnapshot(targetMonth){const snapshot=await api("apiGetInitialSnapshot",token,targetMonth);window.ShiftMateCache?.set?.(targetMonth,snapshot);return snapshot}
 async function loadMonth(date, quiet=false, force=false){
@@ -457,12 +472,12 @@ async function loadMonth(date, quiet=false, force=false){
  const targetMonth=monthKey(date);
  const cached=!force?window.ShiftMateCache?.get?.(targetMonth,"staff"):null;
  if(cached){
-  applyStaffSnapshot(cached);
+  applyRequestSnapshot(cached);
   initialLoadFinished=true;
   $("#appLoading")?.classList.add("hidden");
   if(!quiet)hideLoading();
   fetchAndCacheSnapshot(targetMonth).then(snapshot=>{
-   if(snapshot?.staff)applyStaffSnapshot(snapshot.staff);
+   if(snapshot?.staff)applyRequestSnapshot(snapshot.staff);
   }).catch(error=>console.warn("[ShiftMate Staff] background refresh failed",error));
   return;
  }
@@ -470,7 +485,7 @@ async function loadMonth(date, quiet=false, force=false){
  try{
   const snapshot=await Promise.race([fetchAndCacheSnapshot(targetMonth),new Promise((_,reject)=>setTimeout(()=>reject(new Error("データの読み込みに時間がかかっています。再読み込みしてください。")),20000))]);
   if(!snapshot?.staff)throw new Error("スタッフデータを取得できませんでした");
-  applyStaffSnapshot(snapshot.staff);
+  applyRequestSnapshot(snapshot.staff);
  }catch(e){
   console.error("[ShiftMate Staff] loadMonth failed",e);toast(e.message);
   const loadingText=$("#loadingText");if(loadingText)loadingText.textContent=e.message||"データを読み込めませんでした";
@@ -479,6 +494,33 @@ async function loadMonth(date, quiet=false, force=false){
   if(!quiet)hideLoading();initialLoadFinished=true;setTimeout(()=>$("#appLoading")?.classList.add("hidden"),120);
  }
 }
+
+async function loadConfirmedMonth(date, quiet=false, force=false){
+ if(!token){location.reload();return}
+ const targetMonth=monthKey(date);
+ const cached=!force?window.ShiftMateCache?.get?.(targetMonth,"staff"):null;
+ if(cached){
+  applyConfirmedSnapshot(cached);
+  initialLoadFinished=true;
+  $("#appLoading")?.classList.add("hidden");
+  if(!quiet)hideLoading();
+  fetchAndCacheSnapshot(targetMonth).then(snapshot=>{
+   if(snapshot?.staff)applyConfirmedSnapshot(snapshot.staff);
+  }).catch(error=>console.warn("[ShiftMate Staff] confirmed background refresh failed",error));
+  return;
+ }
+ if(!quiet)showLoading("確定シフトを読み込んでいます");
+ try{
+  const snapshot=await Promise.race([fetchAndCacheSnapshot(targetMonth),new Promise((_,reject)=>setTimeout(()=>reject(new Error("確定シフトの読み込みに時間がかかっています。再読み込みしてください。")),20000))]);
+  if(!snapshot?.staff)throw new Error("確定シフトを取得できませんでした");
+  applyConfirmedSnapshot(snapshot.staff);
+ }catch(e){
+  console.error("[ShiftMate Staff] loadConfirmedMonth failed",e);toast(e.message);
+ }finally{
+  if(!quiet)hideLoading();initialLoadFinished=true;setTimeout(()=>$("#appLoading")?.classList.add("hidden"),120);
+ }
+}
+
 function renderIdentity(){
  if(user?.role==="admin")localStorage.setItem(LAST_PAGE_KEY,"staff");
  const name=user?.name||"スタッフ",initial=name.trim().charAt(0)||"人";
@@ -611,7 +653,7 @@ function renderConfirmed(){
 }
 async function changeMonth(target,kind){
  if(kind==="request"){viewDate=target;await loadMonth(viewDate)}
- else{confirmedDate=target;await loadMonth(confirmedDate)}
+ else{confirmedDate=target;await loadConfirmedMonth(confirmedDate)}
 }
 $("#bulkModeBtn").onclick=()=>{if(isLocked())return toast("提出期限を過ぎています");renderPatternPicker();$("#patternOverlay").classList.remove("hidden")};
 $("#changePattern").onclick=()=>{renderPatternPicker();$("#patternOverlay").classList.remove("hidden")};$("#cancelBulk").onclick=stopBulk;
@@ -722,7 +764,7 @@ if(isRoleSwitchEntry){
  window.ShiftMateMotion?.consumeTransition?.();
 }
 
-$("#refreshDataButton")?.addEventListener("click",async()=>{const button=$("#refreshDataButton");if(button?.classList.contains("isLoading"))return;button?.classList.add("isLoading");try{const confirmedActive=$("#confirmedPage")?.classList.contains("active");await loadMonth(confirmedActive?confirmedDate:viewDate,false,true);toast("最新の情報に更新しました")}finally{button?.classList.remove("isLoading")}});
+$("#refreshDataButton")?.addEventListener("click",async()=>{const button=$("#refreshDataButton");if(button?.classList.contains("isLoading"))return;button?.classList.add("isLoading");try{const confirmedActive=$("#confirmedPage")?.classList.contains("active");if(confirmedActive)await loadConfirmedMonth(confirmedDate,false,true);else await loadMonth(viewDate,false,true);toast("最新の情報に更新しました")}finally{button?.classList.remove("isLoading")}});
 
 (async function init(){
  const now=new Date();
@@ -732,7 +774,8 @@ $("#refreshDataButton")?.addEventListener("click",async()=>{const button=$("#ref
 
  bulkPattern={code:"A",time:"",role:"",roleClass:"none"};
  updateTodayLabel();
- await loadMonth(viewDate,isRoleSwitchEntry);
+ await loadConfirmedMonth(confirmedDate,isRoleSwitchEntry);
+ await loadMonth(viewDate,true);
 })();
 </script>
 </body>
