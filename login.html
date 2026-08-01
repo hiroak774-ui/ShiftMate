@@ -617,7 +617,8 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
     const state = {
       sessionToken: '',
       user: null,
-      loginPassword: ''
+      loginPassword: '',
+      manualLoginEnabled: false
     };
 
     const el = {
@@ -643,6 +644,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 
     function initialize() {
       bindEvents();
+      installStartupFocusGuard();
       setManualLoginEnabled(false);
       blurActiveElement();
 
@@ -673,17 +675,67 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
     }
 
     function setManualLoginEnabled(enabled) {
-      [el.email, el.password].forEach((input) => {
-        if (input) input.disabled = !enabled;
-      });
+      state.manualLoginEnabled = Boolean(enabled);
+
+      if (el.loginForm) {
+        if (enabled) {
+          el.loginForm.removeAttribute('inert');
+          el.loginForm.setAttribute('aria-hidden', 'false');
+        } else {
+          el.loginForm.setAttribute('inert', '');
+          el.loginForm.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      if (el.email) {
+        el.email.disabled = !enabled;
+        el.email.readOnly = !enabled;
+        el.email.tabIndex = enabled ? 0 : -1;
+        el.email.setAttribute('inputmode', enabled ? 'email' : 'none');
+        el.email.setAttribute('autocomplete', enabled ? 'username' : 'off');
+      }
+
+      if (el.password) {
+        el.password.disabled = !enabled;
+        el.password.readOnly = !enabled;
+        el.password.tabIndex = enabled ? 0 : -1;
+        el.password.setAttribute('inputmode', enabled ? 'text' : 'none');
+        el.password.setAttribute('autocomplete', enabled ? 'current-password' : 'off');
+      }
 
       const passwordToggle = document.querySelector('[data-target="password"]');
-      if (passwordToggle) passwordToggle.disabled = !enabled;
+      if (passwordToggle) {
+        passwordToggle.disabled = !enabled;
+        passwordToggle.tabIndex = enabled ? 0 : -1;
+      }
 
       if (el.loginButton) {
         el.loginButton.disabled = !enabled;
+        el.loginButton.tabIndex = enabled ? 0 : -1;
         el.loginButton.setAttribute('aria-disabled', enabled ? 'false' : 'true');
       }
+
+      if (!enabled) blurActiveElement();
+    }
+
+    function installStartupFocusGuard() {
+      const keepKeyboardClosed = (event) => {
+        if (state.manualLoginEnabled) return;
+        const target = event && event.target;
+        if (target && el.loginForm && el.loginForm.contains(target)) {
+          if (typeof target.blur === 'function') target.blur();
+          if (event.cancelable) event.preventDefault();
+        }
+      };
+
+      document.addEventListener('focusin', keepKeyboardClosed, true);
+      document.addEventListener('touchstart', keepKeyboardClosed, { capture: true, passive: false });
+      window.addEventListener('pageshow', () => {
+        if (!state.manualLoginEnabled) {
+          window.setTimeout(blurActiveElement, 0);
+          window.setTimeout(blurActiveElement, 120);
+        }
+      });
     }
 
     function blurActiveElement() {
