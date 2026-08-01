@@ -456,7 +456,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
       </div>
 
       <section class="card" aria-live="polite">
-        <div class="view" id="loginView">
+        <div class="view" id="loginView" hidden>
           <div class="heading">
             <h1>ログイン</h1>
           </div>
@@ -670,6 +670,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 
     function showManualLogin() {
       blurActiveElement();
+      if (el.loginView) el.loginView.hidden = false;
       setManualLoginEnabled(true);
       hideStartupSplash();
     }
