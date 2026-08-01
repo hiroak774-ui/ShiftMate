@@ -474,6 +474,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
                   placeholder="example@shiftmate.jp"
                   maxlength="254"
                   required
+                  disabled
                 >
               </div>
             </div>
@@ -489,6 +490,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
                   placeholder="パスワードを入力"
                   maxlength="128"
                   required
+                  disabled
                 >
                 <button class="toggle-password" type="button" data-target="password" aria-label="パスワードを表示">
                   <svg class="eye-open" viewBox="0 0 24 24">
@@ -501,7 +503,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 
             <div class="message" id="loginMessage" role="alert"></div>
 
-            <button class="submit" id="loginButton" type="submit">
+            <button class="submit" id="loginButton" type="submit" disabled>
               <span class="submit-content">
                 <span class="spinner" aria-hidden="true"></span>
                 <span class="normal-label">ログイン</span>
@@ -641,11 +643,12 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 
     function initialize() {
       bindEvents();
+      setManualLoginEnabled(false);
+      blurActiveElement();
 
       const existingToken = safeStorageGet(STORAGE_KEY);
       if (!existingToken) {
-        hideStartupSplash();
-        setTimeout(() => el.email.focus(), 350);
+        showManualLogin();
         return;
       }
 
@@ -659,9 +662,33 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
         })
         .catch(() => {
           safeStorageRemove(STORAGE_KEY);
-          hideStartupSplash();
-          setTimeout(() => el.email.focus(), 100);
+          showManualLogin();
         });
+    }
+
+    function showManualLogin() {
+      blurActiveElement();
+      setManualLoginEnabled(true);
+      hideStartupSplash();
+    }
+
+    function setManualLoginEnabled(enabled) {
+      [el.email, el.password].forEach((input) => {
+        if (input) input.disabled = !enabled;
+      });
+
+      const passwordToggle = document.querySelector('[data-target="password"]');
+      if (passwordToggle) passwordToggle.disabled = !enabled;
+
+      if (el.loginButton) {
+        el.loginButton.disabled = !enabled;
+        el.loginButton.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+      }
+    }
+
+    function blurActiveElement() {
+      const active = document.activeElement;
+      if (active && typeof active.blur === 'function') active.blur();
     }
 
     function hideStartupSplash() {
@@ -816,6 +843,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
 
       if (role !== ROLE_ADMIN && role !== ROLE_STAFF) {
         safeStorageRemove(STORAGE_KEY);
+        setManualLoginEnabled(true);
         hideStartupSplash();
         showMessage(el.loginMessage, 'ユーザー権限を確認できませんでした。管理者へお問い合わせください。');
         setLoading(el.loginButton, false);
