@@ -386,6 +386,8 @@ const LAST_PAGE_KEY="shiftmate_last_page";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const token=localStorage.getItem(STORAGE_KEY)||"";
 let user=null, patterns=[], requestMonthlySetting=null, notices=[], members=[];
+function isAdminOnlyMember(person){return person?.role==='admin'&&!person?.socialInsurance}
+function visibleShiftMembers(list){return (Array.isArray(list)?list:[]).filter(person=>!isAdminOnlyMember(person))}
 let viewDate=new Date(), confirmedDate=new Date(), values={}, requestedStatus="";
 const confirmedRowsByMonth=new Map();
 const confirmedSettingsByMonth=new Map();
@@ -453,7 +455,7 @@ function setCommonStaffData(data){
     patterns.push({code:"○",time:"終日勤務可能",role:"時間指定なし",roleClass:"none"},{code:"休",time:"希望休",role:"お休み",roleClass:"none"},{code:"有",time:"有給休暇",role:"お休み",roleClass:"none"});
   }
   if(data.notices)notices=data.notices;
-  if(Array.isArray(data.members)&&data.members.length)members=data.members;
+  if(Array.isArray(data.members)&&data.members.length)members=visibleShiftMembers(data.members);
 }
 function applyRequestSnapshot(data){
   setCommonStaffData(data);
@@ -469,8 +471,9 @@ function applyConfirmedSnapshot(data,targetMonth){
   confirmedRowsByMonth.set(month,rows);
   confirmedSettingsByMonth.set(month,data.monthlySetting||null);
   if(Array.isArray(data.members)&&data.members.length){
-    confirmedMembersByMonth.set(month,data.members);
-    members=data.members;
+    const visibleMembers=visibleShiftMembers(data.members);
+    confirmedMembersByMonth.set(month,visibleMembers);
+    members=visibleMembers;
   }
   const personalConfirmedShifts=(data.confirmedShifts||data.personalConfirmedShifts||[]).filter(r=>r.staffId===user?.staffId);
   const homeData={...data,personalConfirmedShifts,allConfirmedShifts:rows};
@@ -652,8 +655,8 @@ function renderConfirmed(){
  const monthMembers=confirmedMembersByMonth.get(mk)||members||[];
  const rowStaffIds=[...new Set(rows.map(r=>r.staffId).filter(Boolean))];
  const fallbackPeople=rowStaffIds.map(staffId=>monthMembers.find(person=>person.staffId===staffId)||members.find(person=>person.staffId===staffId)||{staffId,name:staffId});
- const allPeople=monthMembers.length?monthMembers:(fallbackPeople.length?fallbackPeople:[user]);
- const peopleSource=confirmedView==="personal"?[user]:allPeople;
+ const allPeople=visibleShiftMembers(monthMembers.length?monthMembers:(fallbackPeople.length?fallbackPeople:[user]));
+ const peopleSource=confirmedView==="personal"?(isAdminOnlyMember(user)?[]:[user]):allPeople;
  const people=peopleSource.filter(Boolean).map(person=>({person,values:Object.fromEntries(rows.filter(r=>r.staffId===person.staffId).map(r=>[Number(r.date.slice(-2)),r.code]))}));
  const host=$("#confirmedTable");host.innerHTML="";const table=document.createElement("table");table.className="confirmed-native-table";
  let head='<thead><tr><th class="status-col" rowspan="2">区分</th><th class="name-col" rowspan="2">スタッフ名</th>';

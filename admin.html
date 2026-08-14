@@ -755,13 +755,16 @@ async function hideDataLoader(hasError=false){
   screen.setAttribute('aria-busy','false');
 }
 
+function isAdminOnlyPerson(p){return !!p?.admin&&p?.type!=='insured'}
 function applyMembers(rows){
-  people=(rows||[]).map(m=>({id:String(m.staffId||''),name:String(m.name||''),email:String(m.email||''),admin:m.role==='admin',type:m.socialInsurance?'insured':'part',newcomer:!!m.isNew,active:m.active!==false,loginConfigured:m.loginConfigured===true,firstPasswordChangeRequired:m.firstPasswordChangeRequired===true,avatarUrl:String(m.avatarUrl||'')})).filter(p=>p.id&&p.active);
+  people=(rows||[]).map(m=>({id:String(m.staffId||''),name:String(m.name||''),email:String(m.email||''),admin:m.role==='admin',type:m.socialInsurance?'insured':'part',newcomer:!!m.isNew,active:m.active!==false,loginConfigured:m.loginConfigured===true,firstPasswordChangeRequired:m.firstPasswordChangeRequired===true,avatarUrl:String(m.avatarUrl||'')})).filter(p=>p.id&&p.active&&!isAdminOnlyPerson(p));
 }
-function applySubmissions(rows){submissionMap={};(rows||[]).forEach(s=>{if(s&&s.staffId)submissionMap[String(s.staffId)]=s})}
+function visibleStaffIdSet(){return new Set(people.map(p=>p.id))}
+
+function applySubmissions(rows){const ids=visibleStaffIdSet();submissionMap={};(rows||[]).forEach(s=>{const id=String(s?.staffId||'');if(id&&ids.has(id))submissionMap[id]=s})}
 function applyPatterns(rows){shiftPatterns=(rows||[]).map(p=>({...p,code:String(p.code||''),role:p.category==='オープン'?'open':p.category==='クローズ'?'close':''})).filter(p=>p.code)}
-function applyRequests(rows){requestShift={};(rows||[]).forEach(e=>{if(!e?.staffId||!e?.date)return;requestShift[`${e.staffId}-${Number(String(e.date).slice(-2))}`]=e.code||''})}
-function applyConfirmed(rows){draftShift={};(rows||[]).forEach(e=>{if(!e?.staffId||!e?.date)return;draftShift[`${e.staffId}-${Number(String(e.date).slice(-2))}`]=e.code||''})}
+function applyRequests(rows){const ids=visibleStaffIdSet();requestShift={};(rows||[]).forEach(e=>{const id=String(e?.staffId||'');if(!id||!ids.has(id)||!e?.date)return;requestShift[`${id}-${Number(String(e.date).slice(-2))}`]=e.code||''})}
+function applyConfirmed(rows){const ids=visibleStaffIdSet();draftShift={};(rows||[]).forEach(e=>{const id=String(e?.staffId||'');if(!id||!ids.has(id)||!e?.date)return;draftShift[`${id}-${Number(String(e.date).slice(-2))}`]=e.code||''})}
 function formatSavedTime(d){if(!d)return '';return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
 function setShiftDirty(value=true){shiftDirty=!!value;renderSaveState()}
 function renderSaveState(){
@@ -855,11 +858,8 @@ function members(){
   $('#memberNewSummary')&&($('#memberNewSummary').textContent=people.filter(p=>p.newcomer).length)
 }
 
-function shiftTablePeople(){
-  // 管理者のみ（管理者=true かつ社保ではない）はメンバー管理には残し、
-  // 希望・仮・確定シフト表からは除外する。
-  return people.filter(p=>!(p.admin&&p.type!=='insured'));
-}
+function shiftTablePeople(){return people}
+
 function isWorkingShiftValue(value){
   const v=String(value||'').trim();
   return !!v&&!['休','希','有','○'].includes(v);
