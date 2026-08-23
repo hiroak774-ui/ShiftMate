@@ -4,7 +4,7 @@
 
   function normalizeError(error) {
     if (error && error.name === 'AbortError') {
-      return new Error('通信がタイムアウトしました。電波状況を確認して、もう一度お試しください。');
+      return new Error('処理に時間がかかり、通信がタイムアウトしました。通信環境またはサーバー処理の混雑を確認して、もう一度お試しください。');
     }
     return error instanceof Error ? error : new Error(String(error || '通信に失敗しました。'));
   }
@@ -16,7 +16,7 @@
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
-      Number(config.REQUEST_TIMEOUT_MS || 25000)
+      Number(config.REQUEST_TIMEOUT_MS || 60000)
     );
 
     try {
