@@ -1,0 +1,117 @@
+name: Apply admin shift fix
+
+on:
+  push:
+    paths:
+      - README.md
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply ShiftMate fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          admin = Path('admin.html')
+          text = admin.read_text(encoding='utf-8')
+
+          def replace_once(source, old, new, label):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, got {count}')
+              return source.replace(old, new, 1)
+
+          text = replace_once(
+              text,
+              '<script src="./motion.js"></script>',
+              '<script src="./motion.js?v=20260823-1822"></script>',
+              'motion cache bust'
+          )
+
+          text = replace_once(
+              text,
+              ".cell.closeShift{\n  background:#f7f5ff!important;\n  color:#5f4d98!important;\n  font-weight:900\n}\n.cell.edit.openShift:hover{background:#ffefd9!important}\n.cell.edit.closeShift:hover{background:#eeeaff!important}",
+              ".cell.closeShift{\n  background:#f7f5ff!important;\n  color:#5f4d98!important;\n  font-weight:900\n}\n.cell.shortShift{\n  background:#e9e3f8!important;\n  color:#514084!important;\n  font-weight:900\n}\n.cell.edit.openShift:hover{background:#ffefd9!important}\n.cell.edit.closeShift:hover{background:#eeeaff!important}\n.cell.edit.shortShift:hover{background:#dfd7f4!important}",
+              'admin shift colors'
+          )
+
+          text = replace_once(
+              text,
+              "  // 「オープン」「オープン対応」など、スプレッドシート側の表記差も吸収する。\n  if(category.includes('オープン'))return 'openShift';\n  if(category.includes('クローズ'))return 'closeShift';",
+              "  // G・Hはショート勤務としてクローズ系の中でも一段濃く表示する。\n  if(normalizedCode==='G'||normalizedCode==='H')return 'shortShift';\n\n  // 「オープン」「オープン対応」など、スプレッドシート側の表記差も吸収する。\n  if(category.includes('オープン'))return 'openShift';\n  if(category.includes('クローズ'))return 'closeShift';",
+              'short shift class'
+          )
+
+          text = replace_once(
+              text,
+              "      draftShift[c.dataset.k]=selectedShift;\n      setShiftDirty(true);",
+              "      const k=c.dataset.k;\n      const current=String(draftShift[k]||'');\n      const selected=String(selectedShift??'');\n      draftShift[k]=current===selected?'':selected;\n      setShiftDirty(true);",
+              'tap toggle'
+          )
+
+          text = replace_once(
+              text,
+              "        const category=String(p.category||'通常');\n        const cls=category==='オープン'?'openPattern':category==='クローズ'?'closePattern':'';",
+              "        const category=String(p.category||'通常');\n        const normalizedCode=String(p.code||'').trim().toUpperCase();\n        const cls=(normalizedCode==='G'||normalizedCode==='H')?'shortPattern':category==='オープン'?'openPattern':category==='クローズ'?'closePattern':'';",
+              'time guide short class'
+          )
+
+          text = replace_once(
+              text,
+              ".timeRow.openPattern{background:#fffaf4}.timeRow.closePattern{background:#faf9ff}.timeRow.openPattern .timeCode{background:#ffe7c9;color:#8d5717}.timeRow.closePattern .timeCode{background:#e4dfff;color:#5f4d98}.openPattern .timeCategory{background:#ffe7c9;color:#9a5b13}.closePattern .timeCategory{background:#e4dfff;color:#6552a1}",
+              ".timeRow.openPattern{background:#fffaf4}.timeRow.closePattern{background:#faf9ff}.timeRow.shortPattern{background:#f3f0fb}.timeRow.openPattern .timeCode{background:#ffe7c9;color:#8d5717}.timeRow.closePattern .timeCode{background:#e4dfff;color:#5f4d98}.timeRow.shortPattern .timeCode{background:#d8cff1;color:#514084}.openPattern .timeCategory{background:#ffe7c9;color:#9a5b13}.closePattern .timeCategory{background:#e4dfff;color:#6552a1}.shortPattern .timeCategory{background:#d8cff1;color:#514084}",
+              'time guide colors'
+          )
+
+          text = replace_once(
+              text,
+              "    const p=patternByCode(code),cat=String(p?.category||'');\n    if(cat==='オープン')return ['#fde5d9','#8b4a2f'];\n    if(cat==='クローズ')return ['#e4eefc','#466796'];",
+              "    const normalized=String(code||'').trim().toUpperCase();\n    const p=patternByCode(code),cat=String(p?.category||'');\n    if(cat==='オープン')return ['#fde5d9','#8b4a2f'];\n    if(cat==='クローズ'){\n      if(normalized==='G'||normalized==='H')return ['#d8cff1','#514084'];\n      return ['#e4dfff','#5f4d98'];\n    }",
+              'share image colors'
+          )
+
+          admin.write_text(text, encoding='utf-8')
+
+          staff = Path('staff.html')
+          s = staff.read_text(encoding='utf-8')
+          s = replace_once(
+              s,
+              '.day-value.work{background:#dff6ef;color:#239b7c}.day-value.close-work{background:#e8f1ff;color:#567fc2}',
+              '.day-value.work{background:#dff6ef;color:#239b7c}.day-value.close-work{background:#f7f5ff;color:#5f4d98}.day-value.short-work{background:#e9e3f8;color:#514084}',
+              'staff calendar colors'
+          )
+          s = replace_once(
+              s,
+              '.confirmed-native-table td.work{background:#dff6ef;color:#248c72;font-weight:850}\n.confirmed-native-table td.close-work{background:#e6f1ff;color:#5277b5;font-weight:850}',
+              '.confirmed-native-table td.work{background:#dff6ef;color:#248c72;font-weight:850}\n.confirmed-native-table td.close-work{background:#f7f5ff;color:#5f4d98;font-weight:850}\n.confirmed-native-table td.short-work{background:#e9e3f8;color:#514084;font-weight:850}',
+              'staff confirmed colors'
+          )
+          s = replace_once(
+              s,
+              'function confirmedClass(code){if(!code)return"empty";if(code==="休")return"off";if(code==="希")return"requested-off";if(code==="有")return"paid";if(code==="○")return"circle";return["C","D","G","H"].includes(code)?"close-work":"work"}',
+              'function confirmedClass(code){if(!code)return"empty";if(code==="休")return"off";if(code==="希")return"requested-off";if(code==="有")return"paid";if(code==="○")return"circle";if(["G","H"].includes(code))return"short-work";return["C","D"].includes(code)?"close-work":"work"}',
+              'staff short shift class'
+          )
+          staff.write_text(s, encoding='utf-8')
+
+          Path('motion.js').write_text("""(() => {\n  'use strict';\n  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;\n\n  window.ShiftMateMotion = {\n    enter() {\n      if (reduced) {\n        document.documentElement.classList.add('sm-page-ready');\n        return;\n      }\n      requestAnimationFrame(() => document.documentElement.classList.add('sm-page-ready'));\n    },\n    leave(callback) {\n      if (reduced) {\n        callback();\n        return;\n      }\n      document.documentElement.classList.add('sm-page-leaving');\n      window.setTimeout(callback, 150);\n    },\n    markRoleSwitch(target) {\n      sessionStorage.setItem('shiftmate_transition', 'role-switch');\n      sessionStorage.setItem('shiftmate_transition_target', target);\n    },\n    consumeTransition() {\n      const value = sessionStorage.getItem('shiftmate_transition') || '';\n      sessionStorage.removeItem('shiftmate_transition');\n      sessionStorage.removeItem('shiftmate_transition_target');\n      return value;\n    },\n    peekTransition() {\n      return sessionStorage.getItem('shiftmate_transition') || '';\n    }\n  };\n\n  document.addEventListener('DOMContentLoaded', () => window.ShiftMateMotion.enter());\n})();\n""", encoding='utf-8')
+          PY
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "ShiftMate Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add admin.html staff.html motion.js
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Apply shift input toggle and purple shift colors"
+          git push
