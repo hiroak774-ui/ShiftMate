@@ -62,10 +62,10 @@
     markShortShiftElements();
 
     const observer = new MutationObserver(() => markShortShiftElements());
-    const table = document.querySelector('#table');
-    const timeGrid = document.querySelector('#timeGrid');
-    if (table) observer.observe(table, { childList: true, subtree: true });
-    if (timeGrid) observer.observe(timeGrid, { childList: true, subtree: true });
+    const tableEl = document.querySelector('#table');
+    const timeGridEl = document.querySelector('#timeGrid');
+    if (tableEl) observer.observe(tableEl, { childList: true, subtree: true });
+    if (timeGridEl) observer.observe(timeGridEl, { childList: true, subtree: true });
 
     document.addEventListener('click', event => {
       const cell = event.target.closest?.('#table .cell.edit[data-k]');
