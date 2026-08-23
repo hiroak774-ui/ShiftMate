@@ -107,7 +107,7 @@
 .timeCode{width:34px;height:34px;border-radius:10px;background:var(--ms);color:var(--md);display:grid;place-items:center;font-weight:950;font-size:14px}
 .timeMain{display:flex;flex-direction:column;gap:4px;min-width:0}.timeMain strong{font-size:14px;white-space:nowrap}.timeMeta{color:var(--mut);font-size:11px;line-height:1.45;white-space:nowrap}
 .timeCategory{display:inline-flex;justify-content:center;align-items:center;justify-self:start;min-width:82px;padding:7px 10px;border-radius:999px;background:#eef5f3;color:var(--mut);font-weight:850;font-size:11px}
-.timeRow.openPattern{background:#fffaf4}.timeRow.closePattern{background:#faf9ff}.timeRow.shortPattern{background:#f3f0fb}.timeRow.openPattern .timeCode{background:#ffe7c9;color:#8d5717}.timeRow.closePattern .timeCode{background:#e4dfff;color:#5f4d98}.timeRow.shortPattern .timeCode{background:#d8cff1;color:#514084}.openPattern .timeCategory{background:#ffe7c9;color:#9a5b13}.closePattern .timeCategory{background:#e4dfff;color:#6552a1}.shortPattern .timeCategory{background:#d8cff1;color:#514084}
+.timeRow.openPattern{background:#fffaf4}.timeRow.closePattern{background:#faf9ff}.timeRow.shortPattern{background:#eee9f8}.timeRow.openPattern .timeCode{background:#ffe7c9;color:#8d5717}.timeRow.closePattern .timeCode{background:#e4dfff;color:#5f4d98}.timeRow.shortPattern .timeCode{background:#c9b9e8;color:#493775}.openPattern .timeCategory{background:#ffe7c9;color:#9a5b13}.closePattern .timeCategory{background:#e4dfff;color:#6552a1}.shortPattern .timeCategory{background:#c9b9e8;color:#493775}
 .memberBadge.unset{background:#fff2df;color:#a76d18}.loginSetupBox{margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#f8fbfa}.loginSetupRow{display:flex;align-items:center;justify-content:space-between;gap:12px}.loginSetupCopy{display:flex;flex-direction:column;gap:3px}.loginSetupCopy strong{font-size:13px}.loginSetupCopy small{color:var(--mut);font-size:11px}.loginStatus{padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800;background:var(--ms);color:var(--md)}.loginStatus.unset{background:var(--as);color:var(--amber)}.passwordResult{padding:16px;border-radius:16px;background:var(--ms);text-align:center}.passwordResult code{display:block;margin:10px 0;font-size:20px;font-weight:900;letter-spacing:.08em;word-break:break-all}.passwordResult p{margin:0;color:var(--mut);font-size:12px;line-height:1.6}
 @media(max-width:520px){.timeSheet{width:100%}.timeGridHead,.timeRow{grid-template-columns:52px minmax(0,1fr) 92px;gap:8px}.timeGridHead{padding:9px 11px}.timeRow{padding:12px 11px}.timeMain strong{font-size:13px}.timeMeta{font-size:10px;white-space:normal}.timeCategory{min-width:72px;padding:6px 7px;font-size:10px}}
 .timeCode{width:30px;height:30px;border-radius:9px;background:var(--ms);color:var(--md);display:grid;place-items:center;font-weight:900;flex:none}
@@ -128,13 +128,13 @@
   font-weight:900
 }
 .cell.shortShift{
-  background:#e9e3f8!important;
-  color:#514084!important;
+  background:#d9cef0!important;
+  color:#493775!important;
   font-weight:900
 }
 .cell.edit.openShift:hover{background:#ffefd9!important}
 .cell.edit.closeShift:hover{background:#eeeaff!important}
-.cell.edit.shortShift:hover{background:#dfd7f4!important}
+.cell.edit.shortShift:hover{background:#cdbce9!important}
 .cell.summaryLabel{
   position:sticky;
   left:0;
@@ -536,7 +536,7 @@ button:active,a:active,[role="button"]:active{transform:scale(.98)}
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 </style>
-<script src="./motion.js?v=20260823-1822"></script>
+<script src="./motion.js?v=20260823-1842"></script>
 </head>
 <body>
 
@@ -1348,7 +1348,7 @@ function createShiftShareCanvas(){
     const p=patternByCode(code),cat=String(p?.category||'');
     if(cat==='オープン')return ['#fde5d9','#8b4a2f'];
     if(cat==='クローズ'){
-      if(normalized==='G'||normalized==='H')return ['#d8cff1','#514084'];
+      if(normalized==='G'||normalized==='H')return ['#c9b9e8','#493775'];
       return ['#e4dfff','#5f4d98'];
     }
     return ['#fff','#28322f'];
