@@ -35,7 +35,6 @@ jobs:
               if s != before:
                   p.write_text(s, encoding='utf-8')
 
-          # Force the admin page to pick up the latest assets on iPhone/PWA.
           p = Path('admin.html')
           s = p.read_text(encoding='utf-8')
           s = s.replace('motion.js?v=20260823-1822', 'motion.js?v=20260823-1842')
@@ -49,3 +48,5 @@ jobs:
           git add admin.html staff.html
           git commit -m "Deepen G H short shift purple" || exit 0
           git push
+
+# trigger: 20260823-1842
