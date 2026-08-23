@@ -1,0 +1,51 @@
+name: Deepen short shift purple
+
+on:
+  push:
+    paths:
+      - '.github/workflows/deepen-short-shift-purple.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update G H purple colors
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              '#e9e3f8': '#d9cef0',
+              '#514084': '#493775',
+              '#dfd7f4': '#cdbce9',
+              '#f3f0fb': '#eee9f8',
+              '#d8cff1': '#c9b9e8',
+          }
+
+          for filename in ['admin.html', 'staff.html']:
+              p = Path(filename)
+              s = p.read_text(encoding='utf-8')
+              before = s
+              for old, new in replacements.items():
+                  s = s.replace(old, new)
+              if s != before:
+                  p.write_text(s, encoding='utf-8')
+
+          # Force the admin page to pick up the latest assets on iPhone/PWA.
+          p = Path('admin.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('motion.js?v=20260823-1822', 'motion.js?v=20260823-1842')
+          s = s.replace('motion.js?v=20260823-1828', 'motion.js?v=20260823-1842')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit color update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html staff.html
+          git commit -m "Deepen G H short shift purple" || exit 0
+          git push
