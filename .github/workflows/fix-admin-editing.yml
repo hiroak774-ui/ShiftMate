@@ -1,0 +1,78 @@
+name: Fix admin editing regression
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-admin-editing.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch admin editing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('admin.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = "let selectedShift='', editId=null, reminderTargets=[], unpublishId=null, startMode='now', periodMode='today', businessDayDraft={holidays:[],closedDays:[]};"
+          new = "let selectedShift='A', editId=null, reminderTargets=[], unpublishId=null, startMode='now', periodMode='today', businessDayDraft={holidays:[],closedDays:[]};"
+          if old not in s:
+              raise SystemExit('selectedShift declaration not found')
+          s = s.replace(old, new, 1)
+
+          old = '''  if(editable){
+    $$(`${target} [data-k]`).forEach(c=>c.onclick=()=>{
+      if(isClosedDay(Number(c.dataset.day)))return say('休館日はシフトを入力できません');
+      const k=c.dataset.k;
+      const current=String(draftShift[k]||'');
+      const selected=String(selectedShift??'');
+      draftShift[k]=current===selected?'':selected;
+      setShiftDirty(true);
+      table();
+      pub();
+    });
+  }
+'''
+          new = '''  if(editable){
+    b.onclick=e=>{
+      const c=e.target.closest?.('[data-k]');
+      if(!c||!b.contains(c))return;
+      if(isClosedDay(Number(c.dataset.day)))return say('休館日はシフトを入力できません');
+      const k=c.dataset.k;
+      const current=String(draftShift[k]||'');
+      const selected=String(selectedShift??'');
+      draftShift[k]=current===selected?'':selected;
+      setShiftDirty(true);
+      table();
+      pub();
+    };
+  }else{
+    b.onclick=null;
+  }
+'''
+          if old not in s:
+              raise SystemExit('editable handler block not found')
+          s = s.replace(old, new, 1)
+
+          old = "  if(!validCodes.includes(selectedShift)&&!['休','希','有',''].includes(selectedShift))selectedShift=validCodes[0]||'休';\n  if(selectedShift===''&&!validCodes.length)selectedShift='休';"
+          new = "  if(!validCodes.includes(selectedShift)&&!['休','希','有',''].includes(selectedShift))selectedShift=validCodes[0]||'休';\n  if(selectedShift===''&&validCodes.length)selectedShift=validCodes[0];\n  if(selectedShift===''&&!validCodes.length)selectedShift='休';"
+          if old not in s:
+              raise SystemExit('selectedShift validation block not found')
+          s = s.replace(old, new, 1)
+
+          s = s.replace('./motion.js?v=20260823-1822', './motion.js?v=20260823-1828', 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html
+          git commit -m "Repair admin shift editing while published" || exit 0
+          git push
