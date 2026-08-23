@@ -76,3 +76,4 @@ jobs:
           git add admin.html
           git commit -m "Repair admin shift editing while published" || exit 0
           git push
+# trigger
