@@ -1,0 +1,55 @@
+name: Add staff confirmed shift hours
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-staff-confirmed-hours.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add monthly hours to confirmed shift totals
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('staff.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = '.confirmed-native-table .total-col{min-width:48px}'
+          new = '.confirmed-native-table .total-col{min-width:78px;white-space:nowrap}'
+          if old not in s:
+              raise SystemExit('total-col CSS not found')
+          s = s.replace(old, new, 1)
+
+          old = 'function getPattern(code){return patterns.find(p=>p.code===code)}\nfunction entriesToValues(rows)'
+          new = '''function getPattern(code){return patterns.find(p=>p.code===code)}
+function hoursForCode(code){const p=getPattern(code);if(!p||!p.workingTime)return 0;const [h,m]=String(p.workingTime).split(":").map(Number);return (h||0)+(m||0)/60}
+function formatHours(hours){const rounded=Math.round((Number(hours)||0)*100)/100;return String(rounded)}
+function entriesToValues(rows)'''
+          if old not in s:
+              raise SystemExit('getPattern insertion point not found')
+          s = s.replace(old, new, 1)
+
+          old = ''' let body="<tbody>";people.forEach(({person,values:map},personIndex)=>{body+=`<tr><td class="status-col">${person.socialInsurance?'<span class="confirmed-status-mark insured">社</span>':person.isNew?'<span class="confirmed-status-mark newcomer">新</span>':""}</td><td class="name-col"><strong>${esc(person.name)}</strong></td>`;let count=0;
+  for(let d=1;d<=days;d++){const key=`${mk}-${String(d).padStart(2,"0")}`,closed=(confirmedMonthlySetting?.closedDays||[]).includes(key),c=map[d]||"",today=d===todayInMonth,last=personIndex===people.length-1;if(c&&!['休','希','有'].includes(c)&&!closed)count++;body+=`<td class="${closed?'closed':confirmedClass(c)}${today?' today-col':''}${today&&last?' today-bottom':''}">${closed?'休館':esc(c)}</td>`}body+=`<td class="total-col">${count}日</td></tr>`});'''
+          new = ''' let body="<tbody>";people.forEach(({person,values:map},personIndex)=>{body+=`<tr><td class="status-col">${person.socialInsurance?'<span class="confirmed-status-mark insured">社</span>':person.isNew?'<span class="confirmed-status-mark newcomer">新</span>':""}</td><td class="name-col"><strong>${esc(person.name)}</strong></td>`;let count=0,totalHours=0;
+  for(let d=1;d<=days;d++){const key=`${mk}-${String(d).padStart(2,"0")}`,closed=(confirmedMonthlySetting?.closedDays||[]).includes(key),c=map[d]||"",today=d===todayInMonth,last=personIndex===people.length-1;if(c&&!['休','希','有'].includes(c)&&!closed){count++;totalHours+=hoursForCode(c)}body+=`<td class="${closed?'closed':confirmedClass(c)}${today?' today-col':''}${today&&last?' today-bottom':''}">${closed?'休館':esc(c)}</td>`}body+=`<td class="total-col">${count}日 / ${formatHours(totalHours)}h</td></tr>`});'''
+          if old not in s:
+              raise SystemExit('confirmed total rendering block not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit staff confirmed hours
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add staff.html
+          git commit -m "Show confirmed shift hours on staff screen" || exit 0
+          git push
