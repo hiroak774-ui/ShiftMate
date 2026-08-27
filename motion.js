@@ -33,6 +33,21 @@
     }
   };
 
+  function setupUnifiedPaidLeaveColor() {
+    const style = document.createElement('style');
+    style.textContent = `
+      .paid,
+      .cell.paid,
+      .day-value.paid,
+      #confirmedPage .confirmed-native-table td.paid{
+        background:#eef1f0!important;
+        color:#68746f!important;
+        font-weight:900
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function setupStaffConfirmedHours() {
     const host = document.querySelector('#confirmedPage #confirmedTable');
     if (!host || !document.querySelector('#requestPage')) return;
@@ -120,6 +135,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     window.ShiftMateMotion.enter();
+    setupUnifiedPaidLeaveColor();
     setupStaffConfirmedHours();
   });
 })();
