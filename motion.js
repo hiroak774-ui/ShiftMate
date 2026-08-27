@@ -44,8 +44,8 @@
       #confirmedPage .confirmed-native-table td.sm-close-shift{background:#f7f5ff!important;color:#5f4d98!important;font-weight:900}
       #confirmedPage .confirmed-native-table td.sm-short-shift{background:#d9cef0!important;color:#493775!important;font-weight:900}
       #confirmedPage .confirmed-native-table td.requested-off{background:#343a38!important;color:#fff!important;font-weight:900}
-      #confirmedPage .confirmed-native-table td.off{background:#eef1f0!important;color:#68746f!important;font-weight:900}
-      #confirmedPage .confirmed-native-table td.paid{background:#e8f7f1!important;color:#2f7d67!important;font-weight:900}
+      #confirmedPage .confirmed-native-table td.off,
+      #confirmedPage .confirmed-native-table td.paid{background:#eef1f0!important;color:#68746f!important;font-weight:900}
     `;
     document.head.appendChild(style);
 
