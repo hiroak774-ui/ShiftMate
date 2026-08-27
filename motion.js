@@ -38,18 +38,53 @@
     if (!host || !document.querySelector('#requestPage')) return;
 
     const style = document.createElement('style');
-    style.textContent = '#confirmedPage .confirmed-native-table .total-col{min-width:78px;white-space:nowrap}';
+    style.textContent = `
+      #confirmedPage .confirmed-native-table .total-col{min-width:78px;white-space:nowrap}
+      #confirmedPage .confirmed-native-table td.sm-open-shift{background:#fff8ef!important;color:#8d5717!important;font-weight:900}
+      #confirmedPage .confirmed-native-table td.sm-close-shift{background:#f7f5ff!important;color:#5f4d98!important;font-weight:900}
+      #confirmedPage .confirmed-native-table td.sm-short-shift{background:#d9cef0!important;color:#493775!important;font-weight:900}
+      #confirmedPage .confirmed-native-table td.requested-off{background:#343a38!important;color:#fff!important;font-weight:900}
+      #confirmedPage .confirmed-native-table td.off{background:#eef1f0!important;color:#68746f!important;font-weight:900}
+      #confirmedPage .confirmed-native-table td.paid{background:#e8f7f1!important;color:#2f7d67!important;font-weight:900}
+    `;
     document.head.appendChild(style);
 
-    const hoursForCode = code => {
+    const patternList = () => {
       try {
-        const list = typeof patterns !== 'undefined' && Array.isArray(patterns) ? patterns : [];
-        const pattern = list.find(item => item?.code === code);
-        if (!pattern?.workingTime) return 0;
-        const [h, m] = String(pattern.workingTime).split(':').map(Number);
-        return (h || 0) + (m || 0) / 60;
+        return typeof patterns !== 'undefined' && Array.isArray(patterns) ? patterns : [];
       } catch (_) {
-        return 0;
+        return [];
+      }
+    };
+
+    const patternForCode = code => {
+      const normalized = String(code || '').trim().toUpperCase();
+      return patternList().find(item => String(item?.code || '').trim().toUpperCase() === normalized);
+    };
+
+    const hoursForCode = code => {
+      const pattern = patternForCode(code);
+      if (!pattern?.workingTime) return 0;
+      const [h, m] = String(pattern.workingTime).split(':').map(Number);
+      return (h || 0) + (m || 0) / 60;
+    };
+
+    const applyAdminColorRule = (cell, code) => {
+      cell.classList.remove('sm-open-shift', 'sm-close-shift', 'sm-short-shift');
+      const normalized = String(code || '').trim().toUpperCase();
+      if (!normalized || ['休', '希', '有', '休館', '○'].includes(normalized)) return;
+
+      if (normalized === 'G' || normalized === 'H') {
+        cell.classList.add('sm-short-shift');
+        return;
+      }
+
+      const pattern = patternForCode(normalized);
+      const category = String(pattern?.category || pattern?.role || '').trim();
+      if (category.includes('オープン')) {
+        cell.classList.add('sm-open-shift');
+      } else if (category.includes('クローズ')) {
+        cell.classList.add('sm-close-shift');
       }
     };
 
@@ -65,8 +100,9 @@
         let totalHours = 0;
 
         dayCells.forEach(cell => {
-          if (cell.classList.contains('closed')) return;
           const code = String(cell.textContent || '').trim();
+          applyAdminColorRule(cell, code);
+          if (cell.classList.contains('closed')) return;
           if (!code || ['休', '希', '有', '休館'].includes(code)) return;
           workDays += 1;
           totalHours += hoursForCode(code);
